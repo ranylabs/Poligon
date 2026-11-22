@@ -468,7 +468,7 @@ async function toggleSrrReference(visible){
  try{
   if(!srrReferenceLayer){
     status.textContent='Loading Mediterranean FIR/SRR reference coordinates...';
-    const data=await getSrrJSON('./data/srr-eastmed-reference.geojson?v=20261122-coast-v2');
+    const data=await getSrrJSON('./data/srr-eastmed-reference.geojson?v=20261122-israel-wgs84-v3');
     regionalSrrData=data;
     srrReferenceLayer=makeSrrLayer(data,'eastmed');
     syncSrrRegionLayers();
