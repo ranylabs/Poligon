@@ -2,32 +2,37 @@
   "type": "FeatureCollection",
   "name": "Eastern Mediterranean SAR/FIR reference — partial, not operational boundaries",
   "metadata": {
-    "version": "2026-11-22-reference-v1",
+    "version": "2026-11-22-reference-v2",
     "datum": "WGS84",
     "coordinate_order": "longitude,latitude",
-    "status": "REFERENCE ONLY. Cyprus complete FIR outline with mathematically interpolated arcs; Israel and Egypt are partial boundary lines, NOT complete SRR polygons.",
+    "status": "REFERENCE DATA ONLY — NOT validated GISIS SAR boundaries. Some Mediterranean SAR boundaries disputed/provisional; Israel has a 27 NM coastline-parallel edge drawn schematically; Egypt uses historical 2014 limits.",
     "sources": [
       "https://www.mcw.gov.cy/mcw/dca/AIS/ais.nsf/All/455773618044F4C9C2257C7E00234503/$file/LC_Amdt_A_2024_004_en.pdf",
       "https://e-aip.azurefd.net/2026-08-06-AIRAC/html/eAIP/LL-ENR-2.1-en-GB.html",
       "https://www.icao.int/MID/Documents/2014/ATM%20SG1/WP%207.pdf",
-      "https://treaties.un.org/doc/Publication/UNTS/Volume%202981/v2981.pdf"
+      "https://treaties.un.org/doc/Publication/UNTS/Volume%202981/v2981.pdf",
+      "https://www.imo.org/en/OurWork/Safety/Pages/GlobalSARPlan.aspx"
     ],
-    "caution": "FIR/SRR links are supported by published agreements. This overlay is NOT a GISIS export. Arcs interpolated; Egypt source 2014; territorial/country-side boundaries omitted. Do not use to determine RCC responsibility."
+    "caution": "FIR/SRR links are supported by published agreements. This overlay is NOT a GISIS export. Arcs interpolated; Egypt source 2014; territorial/country-side boundaries omitted. Do not use to determine RCC responsibility.",
+    "source_review": "Israel AIP effective 2026-08-06; Cyprus AIP 2026-05-14; Egypt ICAO 2014 (not current); IMO GMDSS Manual 2024 provisional SRRs warning."
   },
   "features": [
     {
       "type": "Feature",
-      "id": "LCCC",
+      "id": "cyprus-nicosia-fir-2026",
       "properties": {
-        "name": "Cyprus — Nicosia FIR / Cyprus SRR reference",
+        "name": "Cyprus / Nicosia FIR — 2026 AIP (SAR reference)",
         "country": "Cyprus",
         "region": "Nicosia",
         "kind": "FIR-linked SRR reference",
         "completeness": "FIR outline with interpolated arcs",
         "geometry_status": "reference_digitalization",
         "color": "#d576a6",
-        "source_date": "2024-10-03",
-        "notes": "Nicosia FIR vertices transcribed from Cyprus AIP ENR 2.1. Both 45 NM and 46 NM arcs interpolated with spherical geodesic points."
+        "source_date": "2026-05-14",
+        "notes": "FIR in 2026 Cyprus AIP ENR 2.1, matching minute-level boundary description. SAR responsibility agreement links Nicosia FIR and Cyprus SAR, but the IMO notes disputed/provisional segments involving Türkiye and Greece. For situational awareness, not authoritative maritime SRR boundary.",
+        "source_url": "https://www.mcw.gov.cy/mcw/dca/ais/ais.nsf/All/455773618044F4C9C2257C7E00234503/$file/LC_Amdt_A_2026_002_en.pdf",
+        "status": "PUBLISHED_AIP_ROUNDED_WITH_GEODESIC_ARCS",
+        "confidence": "2026 AIP FIR outline at minute resolution; 45/46 NM published arcs geodesically interpolated. CTA has more precise coordinates but is a different aviation area; not substituted here."
       },
       "geometry": {
         "type": "Polygon",
@@ -367,9 +372,9 @@
     },
     {
       "type": "Feature",
-      "id": "LLLL",
+      "id": "israel-telaviv-fir-west-2026",
       "properties": {
-        "name": "Israel — Tel Aviv FIR offshore boundary (partial)",
+        "name": "Israel / Tel Aviv FIR — published western boundary (partial)",
         "country": "Israel",
         "region": "Tel Aviv / JRCC Haifa",
         "kind": "FIR-linked SRR reference",
@@ -377,149 +382,216 @@
         "geometry_status": "partial_reference",
         "color": "#33b3ff",
         "source_date": "2026-08-06",
-        "notes": "AIP ENR 2.1 offshore western boundary and 46 NM arc digitized; 27 NM coastline-parallel segment represented by straight connection for reference only. Landward border omitted."
+        "notes": "Tel Aviv FIR western offshore boundary from Israel AIP ENR 2.1. Arc interpolation center uses published BGN VOR reference 32°00'47.2N 034°52'31.3E. Coastline-parallel 27 NM segment cannot be reconstructed accurately from endpoint-only specification; do not use to assign SAR coordination responsibility.",
+        "source_url": "https://e-aip.azurefd.net/2026-08-06-AIRAC/html/eAIP/LL-ENR-2.1-en-GB.html",
+        "status": "PUBLISHED_VERTICES_WITH_INTERPOLATION",
+        "confidence": "AIP boundary coordinates; calculated 46 NM arc; 27 NM coastline-parallel section shown as a dashed schematic connection, not a precise marine delimitation."
       },
       "geometry": {
         "type": "LineString",
         "coordinates": [
           [
-            34.2166667,
+            34.21666667,
             31.3
           ],
           [
             34,
-            31.8333333
+            31.83333333
           ],
           [
-            33.9977277,
-            31.8675938
+            33.9920277,
+            31.85494019
           ],
           [
-            33.9906987,
-            31.9007821
+            33.98681121,
+            31.87710367
           ],
           [
-            33.9853922,
-            31.9342006
+            33.98236448,
+            31.89938802
           ],
           [
-            33.9818202,
-            31.9677848
+            33.97869194,
+            31.92177392
           ],
           [
-            33.9799915,
-            32.0014699
+            33.97579732,
+            31.94424196
           ],
           [
-            33.9799116,
-            32.0351905
+            33.97368372,
+            31.96677264
           ],
           [
-            33.9815827,
-            32.0688814
+            33.97235353,
+            31.98934639
           ],
           [
-            33.9850033,
-            32.1024774
+            33.97180851,
+            32.0119436
           ],
           [
-            33.9901688,
-            32.1359131
+            33.97204969,
+            32.03454461
           ],
           [
-            33.997071,
-            32.1691236
+            33.97307746,
+            32.05712975
           ],
           [
-            34.0056984,
-            32.2020443
+            33.9748915,
+            32.07967935
           ],
           [
-            34.0160361,
-            32.2346111
+            33.97749081,
+            32.10217375
           ],
           [
-            34.0280658,
-            32.2667604
+            33.9808737,
+            32.12459333
           ],
           [
-            34.0417658,
-            32.2984296
+            33.9850378,
+            32.14691852
           ],
           [
-            34.057111,
-            32.3295567
+            33.98998005,
+            32.16912981
           ],
           [
-            34.0740731,
-            32.3600809
+            33.99569668,
+            32.19120779
           ],
           [
-            34.0926206,
-            32.3899424
+            34.00218327,
+            32.21313313
           ],
           [
-            34.1127186,
-            32.4190827
+            34.00943469,
+            32.23488665
           ],
           [
-            34.1343292,
-            32.4474446
+            34.01744513,
+            32.25644929
           ],
           [
-            34.1574115,
-            32.4749725
+            34.02620812,
+            32.27780213
           ],
           [
-            34.1819213,
-            32.5016121
+            34.0357165,
+            32.29892644
           ],
           [
-            34.2078118,
-            32.5273111
+            34.04596243,
+            32.31980367
           ],
           [
-            34.235033,
-            32.5520188
+            34.05693742,
+            32.34041548
           ],
           [
-            34.2635325,
-            32.5756867
+            34.06863233,
+            32.36074375
           ],
           [
-            34.293255,
-            32.5982679
+            34.08103734,
+            32.38077058
           ],
           [
-            34.3241428,
-            32.619718
+            34.09414201,
+            32.40047834
           ],
           [
-            34.3561356,
-            32.6399944
+            34.10793524,
+            32.41984967
           ],
           [
-            34.389171,
-            32.6590573
+            34.12240532,
+            32.43886749
           ],
           [
-            34.4231843,
-            32.6768687
+            34.13753992,
+            32.45751501
           ],
           [
-            34.4581087,
-            32.6933935
+            34.15332607,
+            32.47577579
           ],
           [
-            34.4938756,
-            32.7085989
+            34.16975024,
+            32.49363368
           ],
           [
-            34.5333333,
-            32.7166667
+            34.18679829,
+            32.5110729
           ],
           [
-            34.5833333,
+            34.20445549,
+            32.52807803
+          ],
+          [
+            34.22270658,
+            32.54463401
+          ],
+          [
+            34.24153571,
+            32.56072619
+          ],
+          [
+            34.26092652,
+            32.5763403
+          ],
+          [
+            34.28086211,
+            32.59146252
+          ],
+          [
+            34.30132507,
+            32.60607942
+          ],
+          [
+            34.32229751,
+            32.62017803
+          ],
+          [
+            34.34376105,
+            32.63374583
+          ],
+          [
+            34.36569684,
+            32.64677078
+          ],
+          [
+            34.3880856,
+            32.6592413
+          ],
+          [
+            34.41090761,
+            32.6711463
+          ],
+          [
+            34.43414275,
+            32.68247519
+          ],
+          [
+            34.45777051,
+            32.6932179
+          ],
+          [
+            34.48176999,
+            32.70336485
+          ],
+          [
+            34.50611996,
+            32.71290701
+          ],
+          [
+            34.53333333,
+            32.71666667
+          ],
+          [
+            34.58333333,
             33.1
           ],
           [
@@ -531,9 +603,9 @@
     },
     {
       "type": "Feature",
-      "id": "HECC",
+      "id": "egypt-cairo-fir-med-2014",
       "properties": {
-        "name": "Egypt — Cairo FIR northern / eastern maritime boundary (partial)",
+        "name": "Egypt / Cairo FIR — northern and eastern Mediterranean border (2014 reference)",
         "country": "Egypt",
         "region": "Cairo / JRCC Cairo",
         "kind": "FIR-linked SRR reference",
@@ -541,7 +613,10 @@
         "geometry_status": "historical_partial_reference",
         "color": "#eeb54f",
         "source_date": "2014-05-31",
-        "notes": "From ICAO MID ATM SG/1-WP/7 (2014). Historical proposal/working paper, not verified against current 2026 AIP. Marine northern / eastern boundary shown; landward boundary omitted."
+        "notes": "From ICAO MID ATM SG/1-WP/7 (2014). Historical proposal/working paper, not verified against current 2026 AIP. Marine northern / eastern boundary shown; landward boundary omitted.",
+        "source_url": "https://www.icao.int/MID/Documents/2014/ATM%20SG1/WP%207.pdf",
+        "status": "HISTORICAL_2014_PARTIAL",
+        "confidence": "Historical ICAO air-navigation plan data; current 2026 Egyptian AIP boundary not verified."
       },
       "geometry": {
         "type": "LineString",
