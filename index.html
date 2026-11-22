@@ -11,9 +11,17 @@
 @media(max-width:750px){#measureHud{right:6px;bottom:8px;min-width:190px;padding:8px;font-size:11px}#measureHud .metric{font-size:15px}}
 </style></head><body><div id="app"><aside><h2>POLIGON · Marine Mapper</h2><div class="muted">Prototype for planning, not for navigation</div><section><h3>1 · Object</h3><input id="name" placeholder="Object name" style="width:100%"><div class="row"><label>Color <input id="color" type="color" value="#2da6e9"></label><label>Buffer NM <input id="buffer" type="number" min="0" step=".1" value="0" style="width:70px"></label></div><select id="shape" style="width:100%"><option value="auto">Automatic: polygon for 3+ points</option><option value="route">Route / open line</option><option value="polygon">Polygon / closed area</option></select></section><section><h3>2 · Paste coordinates</h3><textarea id="paste" placeholder="A. 31°51.3′N 034°39.3′E&#10;B. 31°52.2′N 034°38.5′E"></textarea><button onclick="detect()">Detect</button><span id="detected" class="muted"></span></section><section><h3>3 · Edit points</h3><div id="points"></div><button onclick="addPoint()">+ Point</button><button id="addbtn" onclick="toggleMode('add')">+ From map</button><button onclick="plot()">Plot / Save</button><button onclick="resetEditor()">Clear editor</button></section><section><h3>4 · Objects</h3><div id="objectList"></div></section><section><h3>5 · Distance measurement — NM / True bearing</h3><p class="muted">Click map, lines or existing points. Move mouse to see live leg distance, total distance and initial true bearing (°T). Right-click the map for Finish / Undo / Cancel. Keyboard: Enter, Backspace, Esc.</p><button id="measurebtn" onclick="toggleMode('measure')">Measure</button><button onclick="finishMeasure()">Finish</button><button onclick="toggleMode('')">Cancel</button><div id="measureInfo" class="muted"></div><div id="measureList"></div></section><section><h3>6 · Marine weather</h3><p class="muted">Open-Meteo model forecasts. Requires internet. Not observations.</p><button id="weatherbtn" onclick="toggleMode('weather')">Pick weather point</button><label>UTC hour <input type="datetime-local" id="hour"></label><button onclick="weather()">Refresh</button><div id="weatherData" class="muted">Select a position.</div></section><section><h3>7 · Project</h3><button onclick="exportKML()">Export KML</button><button onclick="exportJSON()">Save JSON</button><button onclick="document.getElementById('load').click()">Load JSON</button><input type="file" id="load" accept=".json" hidden onchange="importJSON(event)"><button onclick="fitAll()">Fit all</button><button onclick="deleteAll()">Delete all objects</button><p class="muted">Auto-saved on this browser only.</p></section><section><h3>8 · Search & Rescue Regions — source reference</h3>
 <p class="muted">Only GISIS/authority-approved GML or GeoJSON should be used for operational responsibility. Regional source boundaries shown here are AIP/FIR references; Cairo 2014 is historical. Provisional Cyprus–Türkiye–Greece boundaries are disputed.</p>
-<label><input type="checkbox" id="srrToggle" onchange="toggleSrrReference(this.checked)"> Show selected Mediterranean boundaries (reference)</label>
+<label><input type="checkbox" id="srrToggle" checked onchange="toggleSrrReference(this.checked)"> Show selected Mediterranean boundaries (reference)</label>
 <p class="muted">Choose each country separately. Israel is selected by default; Cyprus and Egypt can be shown independently, even where references overlap.</p><div id="srrColorControls" style="margin-top:7px" class="muted">Enable regional layer to choose individual countries and edit colors.</div>
 <button onclick="zoomSrrReference()">Zoom East Mediterranean</button>
+<button onclick="zoomIsraelGaza()">Zoom Israel / Gaza</button>
+<div style="margin-top:10px;border-top:1px solid #3f586a;padding-top:9px">
+<h3>Gaza maritime notice — separate reference</h3>
+<label><input type="checkbox" id="gazaNoticeToggle" onchange="toggleGazaNotice(this.checked)"> Show Gaza maritime navigational-warning boundary</label>
+<div class="row" style="margin:6px 0"><label class="muted">Gaza notice color <input type="color" id="gazaNoticeColor" value="#edb15c" onchange="setGazaNoticeColor(this.value)"></label></div>
+<p class="muted" style="margin:5px 0">Exact positions from RCC Haifa NAVTEX PA06 / NTM 1/2009. This is a <b>maritime notice area, NOT a search-and-rescue region</b> and NOT a correction to the Tel Aviv FIR. Check current NAVTEX status before operational use.</p>
+<div id="gazaNoticeStatus" class="muted">Off by default · optional Gaza reference</div>
+</div>
 <button onclick="exportSrrReference()">Export regional GeoJSON (with colors)</button>
 <hr style="border:0;border-top:1px solid #3f586a;margin:10px 0">
 <h3>Additional Mediterranean official sources</h3>
@@ -294,7 +302,7 @@ try{let d=JSON.parse(localStorage.getItem('poligon-v1')||'{}');objects=Array.isA
 
 /* Reference overlays and per-feature color controls; independent of user objects. */
 const SRR_COLOR_KEY='poligon-srr-colors-v2';
-let srrReferenceLayer=null,importedSrrLayer=null,importedSrrData=null,regionalSrrData=null;
+let srrReferenceLayer=null,importedSrrLayer=null,importedSrrData=null,regionalSrrData=null,gazaNoticeLayer=null,gazaNoticeData=null;
 const globalSrrLayers={};
 const globalSrrDatasets={
  pacific:{
@@ -316,6 +324,9 @@ try {
  const stored=JSON.parse(localStorage.getItem(SRR_REGION_VISIBILITY_KEY)||'{}');
  if(stored && typeof stored==='object' && !Array.isArray(stored))srrRegionVisible=stored;
 }catch(e){}
+/* Always show Israel reference at every new app launch, even if unchecked in the previous session.
+   Operator may still hide it temporarily using the individual checkbox. */
+srrRegionVisible['israel-telaviv-fir-west-2026']=true;
 function srrRegionFeatureEnabled(feature){
  const key=srrIdentity(feature);
  return Object.prototype.hasOwnProperty.call(srrRegionVisible,key)
@@ -376,12 +387,12 @@ function srrStyle(feature,scope){
  const p=feature.properties||{};
  const partial=(p.geometry_status||'').includes('partial')||feature.geometry?.type==='LineString'||feature.geometry?.type==='MultiLineString';
  const color=srrFeatureColor(feature,scope);
- return {color,weight:partial?3:2.6,opacity:.94,dashArray:partial?'8 5':null,
-   fillColor:color,fillOpacity:partial?0:(scope==='eastmed'?.09:.045),
+ return {color,weight:scope==='gaza'?2.5:(partial?3:2.6),opacity:.94,dashArray:scope==='gaza'?'6 5':(partial?'8 5':null),
+   fillColor:color,fillOpacity:partial?0:(scope==='gaza'?.10:(scope==='eastmed'?.09:.045)),
    bubblingMouseEvents:false};
 }
 function srrLayerForScope(scope){
- return scope==='eastmed'?srrReferenceLayer:scope==='imported'?importedSrrLayer:globalSrrLayers[scope]||null;
+ return scope==='eastmed'?srrReferenceLayer:scope==='imported'?importedSrrLayer:scope==='gaza'?gazaNoticeLayer:globalSrrLayers[scope]||null;
 }
 function saveSrrColor(scope,id,value){
  if(!validColor(value))return;
@@ -625,4 +636,40 @@ function exportImportedSrr(){
  if(data.features)for(const f of data.features){f.properties=f.properties||{};f.properties.display_color=srrFeatureColor(f,'imported')}
  download('Poligon-imported-SRR-reference.geojson',JSON.stringify(data,null,2),'application/geo+json');
 }
+
+/* Gaza NAVTEX maritime notice is NOT a maritime SAR responsibility boundary. */
+async function toggleGazaNotice(enabled){
+ const status=$('gazaNoticeStatus');
+ if(!enabled){
+  if(gazaNoticeLayer && map.hasLayer(gazaNoticeLayer))map.removeLayer(gazaNoticeLayer);
+  status.textContent='Gaza NAVTEX notice layer hidden.';
+  return;
+ }
+ try{
+  if(!gazaNoticeLayer){
+   status.textContent='Loading source-specific Gaza maritime notice positions...';
+   const data=await getSrrJSON('./data/gaza-maritime-notice-ntm1-2009.geojson?v=20261122-notice-v1');
+   gazaNoticeData=data;
+   gazaNoticeLayer=makeSrrLayer(data,'gaza');
+  }
+  if(!$('gazaNoticeToggle').checked)return;
+  gazaNoticeLayer.addTo(map);
+  status.textContent='Gaza maritime notice shown (NAVTEX PA06); NOT SAR boundary, NOT FIR. Check current broadcast validity.';
+ }catch(e){
+  $('gazaNoticeToggle').checked=false;
+  status.textContent='Gaza notice load failed: '+e.message;
+ }
+}
+function setGazaNoticeColor(value){
+ saveSrrColor('gaza','gaza-navtex-p-pa06-2009',value);
+}
+function zoomIsraelGaza(){
+ const bounds=L.latLngBounds([[31.13,33.65],[33.24,35.37]]);
+ map.fitBounds(bounds,{padding:[35,35]});
+}
+/* Initialize independent reference overlays after all functions are declared.
+   Load Israel by default; Egypt and Cyprus remain unselected unless explicitly chosen. */
+if(validColor(srrColors['gaza:gaza-navtex-p-pa06-2009']))
+ $('gazaNoticeColor').value=srrColors['gaza:gaza-navtex-p-pa06-2009'];
+if($('srrToggle').checked)toggleSrrReference(true);
 </script></body></html>
