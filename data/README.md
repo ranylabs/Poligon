@@ -48,6 +48,33 @@ If GISIS or JRCC Haifa provides the current official SRR GML/GeoJSON, **replace 
 
 **Do not infer maritime SRR from EEZ boundaries or national borders.** FIR is not a universal substitute for SRR, even where bilateral/national documents associate them. A SAR boundary does not establish or prejudice state borders or sovereignty.
 
+## Gaza / Rafah discrepancy (reference map vs Poligon)
+
+The existing **Israel / Tel Aviv FIR** southern maritime boundary is anchored at **31°18′N 034°13′E** and **31°50′N 034°00′E**, as specified in the Israeli AIP ENR 2.1 effective August 2026. Connecting these points with a straight segment is correct for this **FIR reference**. The AIP GEN 3.6 states Israeli SAR service responsibility within Tel Aviv FIR, but the FIR reference geometry is **not proof that an independently displayed maritime SRR polygon should include every other local boundary detail**.
+
+The screenshot of Global SAR Hub shows a southern notch close to the Gaza coastline that is **not directly described by this AIP segment**. We have **not established** from the screenshot whether the notch represents political coastline, a separate maritime notice, a distinct SAR polygon, or a different source/boundary revision. We therefore **have not edited the AIP boundary to imitate it.**
+
+A **separately toggleable navigational-warning layer**, `gaza-maritime-notice-ntm1-2009.geojson`, is provided for context. Its 4 positions are transcribed from an RCC Haifa NAVTEX relay of NTM 1/2009 (broadcast Nov 3, 2025; public receipt in Sep–Nov 2026):
+
+| Vertex from notice | Latitude | Longitude |
+| --- | --- | --- |
+| 1 (coast north) | 31°35.71′N | 034°29.46′E |
+| 2 (offshore NW) | 31°46.80′N | 034°10.01′E |
+| 3 (coast south) | 31°19.39′N | 034°13.11′E |
+| 4 (offshore SW) | 31°33.73′N | 033°56.68′E |
+
+For a valid non-self-crossing GeoJSON polygon, the geographic ring is ordered 1→2→4→3→1. This makes a **NAVTEX maritime notice reference, not a SAR boundary and not a Gaza political boundary**. Source: [RCC Haifa NAVTEX PA06 archive](https://navtex.online/messages/33759). The continued validity of the notice is not confirmed by this source alone.
+
+### Default visibility
+
+- The **East Mediterranean reference** master checkbox is ON at every app launch.
+- The **Israel** checkbox is ON at every app launch (even if turned off during a previous session). The operator can switch it off and back on at any time.
+- Cyprus, Egypt and other regional boundaries can be selected individually; their existing settings otherwise persist.
+- The **Gaza maritime NAVTEX notice** checkbox is OFF by default; it can be enabled independently and uses its own adjustable amber line color.
+- The separate Gaza maritime notice does **not** alter the Israel FIR geometry, NOR any stored user objects or measurements.
+
+**Follow-up for exact match:** obtain a current authority-provided Israel maritime SAR polygon / GML from IMO GISIS or JRCC, including any southern coastal exception. Validate origin, effective date and whether the notch is a SAR boundary before replacing a region dataset.
+
 ## Additional worldwide coverage (not a global atlas)
 
 Poligon offers optional **on-demand** public ArcGIS GeoJSON layers, kept separate from the bundled data:
