@@ -48,6 +48,12 @@ function bindSelectable(layer, snappedPoint=null){
   });
   return layer;
 }
+function bindControlledPopup(layer,html){
+  layer.bindPopup(html);
+  if(layer._openPopup)layer.off('click',layer._openPopup,layer);
+  layer.on('click',ev=>{if(!mode)layer.openPopup(ev.latlng)});
+  return layer;
+}
 function draw(){
   group.clearLayers();
   objects.forEach(o=>{
@@ -66,7 +72,7 @@ function draw(){
         ?L.polyline(o.points,{color:o.color,weight:4,bubblingMouseEvents:false})
         :L.polygon(o.points,{color:o.color,fillOpacity:.15,bubblingMouseEvents:false});
     bindSelectable(l,o.type==='Point'?o.points[0]:null);
-    l.addTo(group).bindPopup(clean(o.name)+' · '+o.type+' · '+o.buffer+' NM buffer');
+    l.addTo(group);bindControlledPopup(l,clean(o.name)+' · '+o.type+' · '+o.buffer+' NM buffer');
     o.points.forEach((p,i)=>{
       const marker=L.circleMarker(p,{radius:5,color:o.color,fillColor:'#fff',fillOpacity:1,bubblingMouseEvents:false});
       bindSelectable(marker,p);
@@ -225,8 +231,8 @@ function makeSrrLayer(data,scope='eastmed'){
    const status=clean(p.completeness||p.geometry_status||'External reference');
    const note=clean(p.notes||'');
    const source=clean(p.source_date||'');
-   l.bindPopup('<b>'+name+'</b><br>'+status+(source?'<br>Source date: '+source:'')+(note?'<br><small>'+note+'</small>':''));
    bindSelectable(l);
+   bindControlledPopup(l,'<b>'+name+'</b><br>'+status+(source?'<br>Source date: '+source:'')+(note?'<br><small>'+note+'</small>':''));
   }
  });
 }
