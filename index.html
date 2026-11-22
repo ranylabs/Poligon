@@ -1,7 +1,7 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Poligon · Marine Mapper</title><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><style>*{box-sizing:border-box}body{margin:0;background:#0e1924;color:#e8f1fa;font:14px Arial}#app{display:flex;height:100vh}aside{width:390px;overflow:auto;padding:15px;background:#182837}#map{flex:1}section{background:#233747;border-radius:8px;padding:12px;margin:10px 0}h2{margin:0 0 8px;font-size:19px}h3{margin:0 0 9px;font-size:14px}input,textarea,select{background:#101f2b;color:white;border:1px solid #587083;border-radius:5px;padding:7px}textarea{width:100%;height:100px}button{background:#287fb1;color:white;border:0;border-radius:5px;padding:7px;margin:3px;cursor:pointer}button.active{background:#b7782d}.row{display:flex;gap:5px;align-items:center}.row>*{flex:1;min-width:0}.pt{display:grid;grid-template-columns:1fr 1fr 26px;gap:4px;margin:4px 0}.pt input{width:100%;min-width:0}.item{background:#142634;border-left:4px solid #40b8ed;padding:8px;margin:6px 0}.muted{font-size:12px;color:#afc6d5}#hud{position:absolute;z-index:999;bottom:22px;left:410px;background:#101d29e8;padding:8px;font:12px monospace;pointer-events:none}.leaflet-tooltip.measure{background:#162634;color:white;border:1px solid orange}@media(max-width:750px){#app{flex-direction:column}aside{width:100%;height:50vh}#map{height:50vh;flex:auto}#hud{left:8px;bottom:8px}}</style></head><body><div id="app"><aside><h2>POLIGON · Marine Mapper</h2><div class="muted">Prototype for planning, not for navigation</div><section><h3>1 · Object</h3><input id="name" placeholder="Object name" style="width:100%"><div class="row"><label>Color <input id="color" type="color" value="#2da6e9"></label><label>Buffer NM <input id="buffer" type="number" min="0" step=".1" value="0" style="width:70px"></label></div><select id="shape" style="width:100%"><option value="auto">Automatic: polygon for 3+ points</option><option value="route">Route / open line</option><option value="polygon">Polygon / closed area</option></select></section><section><h3>2 · Paste coordinates</h3><textarea id="paste" placeholder="A. 31°51.3′N 034°39.3′E&#10;B. 31°52.2′N 034°38.5′E"></textarea><button onclick="detect()">Detect</button><span id="detected" class="muted"></span></section><section><h3>3 · Edit points</h3><div id="points"></div><button onclick="addPoint()">+ Point</button><button id="addbtn" onclick="toggleMode('add')">+ From map</button><button onclick="plot()">Plot / Save</button><button onclick="resetEditor()">Clear editor</button></section><section><h3>4 · Objects</h3><div id="objectList"></div></section><section><h3>5 · Distance measurement</h3><p class="muted">Click anywhere, including existing line segments, polygon interiors and point markers. Existing point markers snap to their exact coordinates.</p><button id="measurebtn" onclick="toggleMode('measure')">Measure</button><button onclick="finishMeasure()">Finish</button><button onclick="toggleMode('')">Cancel</button><div id="measureInfo" class="muted"></div><div id="measureList"></div></section><section><h3>6 · Marine weather</h3><p class="muted">Open-Meteo model forecasts. Requires internet. Not observations.</p><button id="weatherbtn" onclick="toggleMode('weather')">Pick weather point</button><label>UTC hour <input type="datetime-local" id="hour"></label><button onclick="weather()">Refresh</button><div id="weatherData" class="muted">Select a position.</div></section><section><h3>7 · Project</h3><button onclick="exportKML()">Export KML</button><button onclick="exportJSON()">Save JSON</button><button onclick="document.getElementById('load').click()">Load JSON</button><input type="file" id="load" accept=".json" hidden onchange="importJSON(event)"><button onclick="fitAll()">Fit all</button><button onclick="deleteAll()">Delete all objects</button><p class="muted">Auto-saved on this browser only.</p></section><section><h3>8 · Search & Rescue Regions — source reference</h3>
 <p class="muted">Only GISIS/authority-approved GML or GeoJSON should be used for operational responsibility. Regional source boundaries shown here are AIP/FIR references; Cairo 2014 is historical. Provisional Cyprus–Türkiye–Greece boundaries are disputed.</p>
-<label><input type="checkbox" id="srrToggle" onchange="toggleSrrReference(this.checked)"> East Mediterranean: Israel, Cyprus, Egypt (reference)</label>
-<div id="srrColorControls" style="margin-top:7px" class="muted">Enable regional layer to edit each line / polygon color.</div>
+<label><input type="checkbox" id="srrToggle" onchange="toggleSrrReference(this.checked)"> Show selected Mediterranean boundaries (reference)</label>
+<p class="muted">Choose each country separately. Israel is selected by default; Cyprus and Egypt can be shown independently, even where references overlap.</p><div id="srrColorControls" style="margin-top:7px" class="muted">Enable regional layer to choose individual countries and edit colors.</div>
 <button onclick="zoomSrrReference()">Zoom East Mediterranean</button>
 <button onclick="exportSrrReference()">Export regional GeoJSON (with colors)</button>
 <hr style="border:0;border-top:1px solid #3f586a;margin:10px 0">
@@ -151,6 +151,49 @@ const globalSrrDatasets={
  }
 };
 let srrColors={};
+const SRR_REGION_VISIBILITY_KEY='poligon-srr-region-visible-v1';
+let srrRegionVisible={};
+const srrRegionLayers=new Map();
+try {
+ const stored=JSON.parse(localStorage.getItem(SRR_REGION_VISIBILITY_KEY)||'{}');
+ if(stored && typeof stored==='object' && !Array.isArray(stored))srrRegionVisible=stored;
+}catch(e){}
+function srrRegionFeatureEnabled(feature){
+ const key=srrIdentity(feature);
+ return Object.prototype.hasOwnProperty.call(srrRegionVisible,key)
+   ? !!srrRegionVisible[key]
+   : feature.properties?.country==='Israel';
+}
+function setSrrRegionFeatureEnabled(feature,enabled){
+ const id=srrIdentity(feature);
+ srrRegionVisible[id]=!!enabled;
+ try{localStorage.setItem(SRR_REGION_VISIBILITY_KEY,JSON.stringify(srrRegionVisible))}catch(e){}
+ const layer=srrRegionLayers.get(id);
+ if(srrReferenceLayer && layer){
+   if(enabled) {
+     if(typeof layer.setStyle==='function')layer.setStyle(srrStyle(feature,'eastmed'));
+     srrReferenceLayer.addLayer(layer);
+   }else srrReferenceLayer.removeLayer(layer);
+ }
+ updateSrrStatus();
+}
+function syncSrrRegionLayers(){
+ if(!srrReferenceLayer||!regionalSrrData)return;
+ for(const feature of regionalSrrData.features){
+   const layer=srrRegionLayers.get(srrIdentity(feature));
+   if(!layer)continue;
+   if(srrRegionFeatureEnabled(feature))srrReferenceLayer.addLayer(layer);
+   else srrReferenceLayer.removeLayer(layer);
+ }
+ updateSrrStatus();
+}
+function updateSrrStatus(){
+ if(!regionalSrrData)return;
+ const active=regionalSrrData.features.filter(srrRegionFeatureEnabled).map(f=>f.properties?.country||f.properties?.name);
+ if($('srrStatus'))$('srrStatus').textContent=(!$('srrToggle').checked?'Regional layer hidden. ':'Visible: ')+
+   (active.join(', ')||'None')+'. Boundaries are source references; some are partial.';
+}
+
 if(!map.getPane('srrReferencePane'))map.createPane('srrReferencePane');
 map.getPane('srrReferencePane').style.zIndex='375';
 try{
@@ -187,7 +230,10 @@ function saveSrrColor(scope,id,value){
  srrColors[scope+':'+id]=value;
  try{localStorage.setItem(SRR_COLOR_KEY,JSON.stringify(srrColors))}catch(e){}
  const layer=srrLayerForScope(scope);
- if(layer)layer.eachLayer(l=>{
+ if(scope==='eastmed'){
+   const hiddenLayer=srrRegionLayers.get(id);
+   if(hiddenLayer&&hiddenLayer.feature&&typeof hiddenLayer.setStyle==='function')hiddenLayer.setStyle(srrStyle(hiddenLayer.feature,scope));
+ }else if(layer)layer.eachLayer(l=>{
    if(l.feature&&srrIdentity(l.feature)===id&&typeof l.setStyle==='function'){
      l.setStyle(srrStyle(l.feature,scope));
    }
@@ -203,6 +249,16 @@ function drawSrrColorInputs(scope,features,targetId){
    const id=srrIdentity(feature);
    const row=document.createElement('label');
    row.style.cssText='display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid #354b5c';
+   if(scope==='eastmed'){
+     const show=document.createElement('input');
+     show.type='checkbox';
+     show.checked=srrRegionFeatureEnabled(feature);
+     show.title='Show or hide '+(p.country||p.name||'boundary');
+     show.setAttribute('aria-label','Show '+(p.country||p.name||'boundary'));
+     show.style.cssText='height:18px;width:18px;min-width:18px;flex:none;accent-color:#39bcf3';
+     show.addEventListener('change',()=>setSrrRegionFeatureEnabled(feature,show.checked));
+     row.appendChild(show);
+   }
    const color=document.createElement('input');
    color.type='color';color.value=srrFeatureColor(feature,scope);color.style.cssText='width:43px;height:28px;min-width:43px;padding:2px;flex:none';
    color.addEventListener('input',()=>saveSrrColor(scope,id,color.value));
@@ -228,6 +284,7 @@ function makeSrrLayer(data,scope='eastmed'){
   style:f=>srrStyle(f,scope),
   onEachFeature:(f,l)=>{
    const p=f.properties||{};
+   if(scope==='eastmed')srrRegionLayers.set(srrIdentity(f),l);
    const name=clean(p.name||p.Name||p.region||'SAR/FIR reference');
    const status=clean(p.completeness||p.geometry_status||'External reference');
    const note=clean(p.notes||'');
@@ -256,11 +313,12 @@ async function toggleSrrReference(visible){
     const data=await getSrrJSON('./data/srr-eastmed-reference.geojson');
     regionalSrrData=data;
     srrReferenceLayer=makeSrrLayer(data,'eastmed');
+    syncSrrRegionLayers();
     drawSrrColorInputs('eastmed',data.features,'srrColorControls');
   }
   if(!$('srrToggle').checked)return;
   srrReferenceLayer.addTo(map);
-  status.textContent='Mediterranean shown: Cyprus 2026 AIP polygon; Israel 2026 partial FIR boundary; Egypt historical 2014 partial border. NOT verified GISIS SRR borders.';
+  updateSrrStatus();
  }catch(e){$('srrToggle').checked=false;status.textContent='Regional overlay failed: '+e.message}
 }
 function zoomSrrReference(){
