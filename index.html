@@ -16,11 +16,8 @@
 <button onclick="zoomSrrReference()">Zoom East Mediterranean</button>
 <button onclick="zoomIsraelGaza()">Zoom Israel / Gaza</button>
 <div style="margin-top:10px;border-top:1px solid #3f586a;padding-top:9px">
-<h3>Gaza maritime notice — separate reference</h3>
-<label><input type="checkbox" id="gazaNoticeToggle" onchange="toggleGazaNotice(this.checked)"> Show Gaza maritime navigational-warning boundary</label>
-<div class="row" style="margin:6px 0"><label class="muted">Gaza notice color <input type="color" id="gazaNoticeColor" value="#edb15c" onchange="setGazaNoticeColor(this.value)"></label></div>
-<p class="muted" style="margin:5px 0">Exact positions from RCC Haifa NAVTEX PA06 / NTM 1/2009. This is a <b>maritime notice area, NOT a search-and-rescue region</b> and NOT a correction to the Tel Aviv FIR. Check current NAVTEX status before operational use.</p>
-<div id="gazaNoticeStatus" class="muted">Off by default · optional Gaza reference</div>
+<p class="muted"><b>Israel coastline display:</b> select the published FIR line or a visual coastal-context reconstruction. The contextual reconstruction uses NGA Gaza Area L security-zone points, not an approved SAR polygon.</p>
+<div id="israelReconstructionStatus" class="muted">Visual coast profile is illustrative, not operationally verified.</div>
 </div>
 <button onclick="exportSrrReference()">Export regional GeoJSON (with colors)</button>
 <hr style="border:0;border-top:1px solid #3f586a;margin:10px 0">
@@ -302,7 +299,7 @@ try{let d=JSON.parse(localStorage.getItem('poligon-v1')||'{}');objects=Array.isA
 
 /* Reference overlays and per-feature color controls; independent of user objects. */
 const SRR_COLOR_KEY='poligon-srr-colors-v2';
-let srrReferenceLayer=null,importedSrrLayer=null,importedSrrData=null,regionalSrrData=null,gazaNoticeLayer=null,gazaNoticeData=null;
+let srrReferenceLayer=null,importedSrrLayer=null,importedSrrData=null,regionalSrrData=null,contextualIsraelLayer=null,contextualIsraelSource=null;
 const globalSrrLayers={};
 const globalSrrDatasets={
  pacific:{
@@ -317,6 +314,9 @@ const globalSrrDatasets={
  }
 };
 let srrColors={};
+const ISRAEL_VARIANT_KEY='poligon-israel-border-variant-v1';
+let israelBorderVariant='context';
+try{const saved=localStorage.getItem(ISRAEL_VARIANT_KEY);if(saved==='aip'||saved==='context')israelBorderVariant=saved}catch(e){}
 const SRR_REGION_VISIBILITY_KEY='poligon-srr-region-visible-v1';
 let srrRegionVisible={};
 const srrRegionLayers=new Map();
@@ -337,22 +337,38 @@ function setSrrRegionFeatureEnabled(feature,enabled){
  const id=srrIdentity(feature);
  srrRegionVisible[id]=!!enabled;
  try{localStorage.setItem(SRR_REGION_VISIBILITY_KEY,JSON.stringify(srrRegionVisible))}catch(e){}
- const layer=srrRegionLayers.get(id);
- if(srrReferenceLayer && layer){
-   if(enabled) {
-     if(typeof layer.setStyle==='function')layer.setStyle(srrStyle(feature,'eastmed'));
-     srrReferenceLayer.addLayer(layer);
-   }else srrReferenceLayer.removeLayer(layer);
- }
- updateSrrStatus();
+ syncSrrRegionLayers();
+}
+function selectIsraelBorderVariant(value){
+ if(value!=='aip'&&value!=='context')return;
+ israelBorderVariant=value;
+ try{localStorage.setItem(ISRAEL_VARIANT_KEY,value)}catch(e){}
+ syncSrrRegionLayers();
+}
+function contextIsraelIsActive(){
+ const isr=regionalSrrData?.features?.find(f=>f.properties?.country==='Israel');
+ return !!(isr&&srrRegionFeatureEnabled(isr)&&israelBorderVariant==='context'&&contextualIsraelLayer);
 }
 function syncSrrRegionLayers(){
  if(!srrReferenceLayer||!regionalSrrData)return;
  for(const feature of regionalSrrData.features){
    const layer=srrRegionLayers.get(srrIdentity(feature));
    if(!layer)continue;
-   if(srrRegionFeatureEnabled(feature))srrReferenceLayer.addLayer(layer);
+   const show=srrRegionFeatureEnabled(feature)&&
+     (feature.properties?.country!=='Israel'||israelBorderVariant!=='context'||!contextualIsraelLayer);
+   if(show)srrReferenceLayer.addLayer(layer);
    else srrReferenceLayer.removeLayer(layer);
+ }
+ if(contextualIsraelLayer){
+  const shouldDisplay=!!($('srrToggle')?.checked&&contextIsraelIsActive());
+  if(shouldDisplay)contextualIsraelLayer.addTo(map);
+  else map.removeLayer(contextualIsraelLayer);
+ }
+ const note=$('israelReconstructionStatus');
+ if(note){
+  if(israelBorderVariant==='context')note.textContent=
+   'Visual reconstruction: NGA Gaza Area L points L2–L4 connected to the AIP FIR offshore arc. NOT an approved SRR boundary.';
+  else note.textContent='Original published Tel Aviv FIR western reference (AIP ENR 2.1), not a verified GISIS SRR polygon.';
  }
  updateSrrStatus();
 }
@@ -360,7 +376,7 @@ function updateSrrStatus(){
  if(!regionalSrrData)return;
  const active=regionalSrrData.features.filter(srrRegionFeatureEnabled).map(f=>f.properties?.country||f.properties?.name);
  if($('srrStatus'))$('srrStatus').textContent=(!$('srrToggle').checked?'Regional layer hidden. ':'Visible: ')+
-   (active.join(', ')||'None')+'. Boundaries are source references; some are partial.';
+   (active.join(', ')||'None')+'. Israel mode: '+(israelBorderVariant==='context'?'illustrative NGA+AIP coastal profile (NOT verified SRR)':'AIP FIR western line')+'. Boundaries are source references; some are partial.';
 }
 
 if(!map.getPane('srrReferencePane'))map.createPane('srrReferencePane');
@@ -402,6 +418,10 @@ function saveSrrColor(scope,id,value){
  if(scope==='eastmed'){
    const hiddenLayer=srrRegionLayers.get(id);
    if(hiddenLayer&&hiddenLayer.feature&&typeof hiddenLayer.setStyle==='function')hiddenLayer.setStyle(srrStyle(hiddenLayer.feature,scope));
+   if(id==='israel-telaviv-fir-west-2026'&&contextualIsraelLayer&&regionalSrrData){
+     const official=regionalSrrData.features.find(f=>f.properties?.country==='Israel');
+     if(official)contextualIsraelLayer.setStyle({...srrStyle(official,'eastmed'),dashArray:'7 4'});
+   }
  }else if(layer)layer.eachLayer(l=>{
    if(l.feature&&srrIdentity(l.feature)===id&&typeof l.setStyle==='function'){
      l.setStyle(srrStyle(l.feature,scope));
@@ -434,7 +454,17 @@ function drawSrrColorInputs(scope,features,targetId){
    const label=document.createElement('span');
    label.style.cssText='flex:1;min-width:0;word-break:break-word;font-size:12px';
    label.textContent=String(p.name||p.Name||p.region||('Boundary '+(index+1)))+(p.completeness?' · '+p.completeness:'');
-   row.appendChild(color);row.appendChild(label);host.appendChild(row);
+   row.appendChild(color);row.appendChild(label);
+   if(scope==='eastmed'&&p.country==='Israel'){
+    row.style.flexWrap='wrap';
+    const select=document.createElement('select');
+    select.style.cssText='width:100%;font-size:11px;margin:4px 0';
+    select.innerHTML='<option value="context">Gaza coastal profile · illustrative (NGA + AIP)</option><option value="aip">Published Tel Aviv FIR line · AIP</option>';
+    select.value=israelBorderVariant;
+    select.addEventListener('change',()=>selectIsraelBorderVariant(select.value));
+    row.appendChild(select);
+   }
+   host.appendChild(row);
  });
  if(features.length>maxControls){
   const note=document.createElement('div');note.textContent=(features.length-maxControls)+' additional boundaries not individually editable in this view.';
@@ -475,18 +505,41 @@ async function getSrrJSON(url){
 }
 async function toggleSrrReference(visible){
  const status=$('srrStatus');
- if(!visible){if(srrReferenceLayer)map.removeLayer(srrReferenceLayer);status.textContent='Eastern Mediterranean reference hidden.';return}
+ if(!visible){
+  if(srrReferenceLayer)map.removeLayer(srrReferenceLayer);
+  if(contextualIsraelLayer)map.removeLayer(contextualIsraelLayer);
+  status.textContent='Eastern Mediterranean reference hidden.';return
+ }
  try{
   if(!srrReferenceLayer){
-    status.textContent='Loading Mediterranean FIR/SRR reference coordinates...';
+    status.textContent='Loading Mediterranean FIR references and independent coastal illustration...';
     const data=await getSrrJSON('./data/srr-eastmed-reference.geojson?v=20261122-israel-wgs84-v3');
     regionalSrrData=data;
     srrReferenceLayer=makeSrrLayer(data,'eastmed');
+    try{
+      const coastalData=await getSrrJSON('./data/israel-gaza-coastal-composite-illustrative.geojson?v=20261122-nga-l');
+      contextualIsraelSource=coastalData;
+      const official=data.features.find(f=>f.properties?.country==='Israel');
+      contextualIsraelLayer=L.geoJSON(coastalData,{
+         pane:'srrReferencePane',
+         style:()=>({...srrStyle(official,'eastmed'),dashArray:'7 4'}),
+         onEachFeature:(feature,layer)=>{
+           bindSelectable(layer);
+           bindControlledPopup(layer,
+             '<b>Israel coastal-context illustration</b><br>NGA Gaza Area L + AIP offshore reference'+
+             '<br><b>NOT verified as an SRR boundary</b>');
+         }
+      });
+    }catch(error){
+      israelBorderVariant='aip';
+      status.textContent='Context illustration unavailable; showing published FIR reference. '+error.message;
+    }
     syncSrrRegionLayers();
     drawSrrColorInputs('eastmed',data.features,'srrColorControls');
   }
   if(!$('srrToggle').checked)return;
   srrReferenceLayer.addTo(map);
+  syncSrrRegionLayers();
   updateSrrStatus();
  }catch(e){$('srrToggle').checked=false;status.textContent='Regional overlay failed: '+e.message}
 }
@@ -637,39 +690,9 @@ function exportImportedSrr(){
  download('Poligon-imported-SRR-reference.geojson',JSON.stringify(data,null,2),'application/geo+json');
 }
 
-/* Gaza NAVTEX maritime notice is NOT a maritime SAR responsibility boundary. */
-async function toggleGazaNotice(enabled){
- const status=$('gazaNoticeStatus');
- if(!enabled){
-  if(gazaNoticeLayer && map.hasLayer(gazaNoticeLayer))map.removeLayer(gazaNoticeLayer);
-  status.textContent='Gaza NAVTEX notice layer hidden.';
-  return;
- }
- try{
-  if(!gazaNoticeLayer){
-   status.textContent='Loading source-specific Gaza maritime notice positions...';
-   const data=await getSrrJSON('./data/gaza-maritime-notice-ntm1-2009.geojson?v=20261122-notice-v1');
-   gazaNoticeData=data;
-   gazaNoticeLayer=makeSrrLayer(data,'gaza');
-  }
-  if(!$('gazaNoticeToggle').checked)return;
-  gazaNoticeLayer.addTo(map);
-  status.textContent='Gaza maritime notice shown (NAVTEX PA06); NOT SAR boundary, NOT FIR. Check current broadcast validity.';
- }catch(e){
-  $('gazaNoticeToggle').checked=false;
-  status.textContent='Gaza notice load failed: '+e.message;
- }
-}
-function setGazaNoticeColor(value){
- saveSrrColor('gaza','gaza-navtex-p-pa06-2009',value);
-}
 function zoomIsraelGaza(){
- const bounds=L.latLngBounds([[31.13,33.65],[33.24,35.37]]);
- map.fitBounds(bounds,{padding:[35,35]});
+ map.fitBounds(L.latLngBounds([[31.10,33.62],[33.20,35.31]]),{padding:[38,38]});
 }
-/* Initialize independent reference overlays after all functions are declared.
-   Load Israel by default; Egypt and Cyprus remain unselected unless explicitly chosen. */
-if(validColor(srrColors['gaza:gaza-navtex-p-pa06-2009']))
- $('gazaNoticeColor').value=srrColors['gaza:gaza-navtex-p-pa06-2009'];
+/* On launch load Israel by default. Coast context is explicitly a visual hypothesis, not certified SRR. */
 if($('srrToggle').checked)toggleSrrReference(true);
 </script></body></html>
