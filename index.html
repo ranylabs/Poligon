@@ -170,6 +170,55 @@ details[open]>.accordion-trigger .accordion-chevron{transform:rotate(225deg) tra
 .tool-panel button.plot-route:hover{background:linear-gradient(120deg,#8af0d0,#58d8ba)}
 .plot-choice-buttons button.is-current{box-shadow:0 0 0 2px #ffffff75 inset,0 5px 14px #071c2955}
 @media(max-width:390px){.plot-choice-buttons{grid-template-columns:1fr}.plot-main-button{min-height:44px}}
+
+/* Map context menu — all functions in one surface, including while measuring */
+#measureContextMenu{min-width:247px;max-width:min(320px,calc(100% - 12px));padding:8px;background:linear-gradient(155deg,#122b3d,#0b1d2b);border:1px solid #4f8193;border-radius:12px;box-shadow:0 13px 35px #03101ecb;backdrop-filter:blur(15px)}
+#measureContextMenu .menu-title{font-size:12px;letter-spacing:.10em;padding:6px 8px;color:#8cdde8}
+#measureContextMenu .map-context-coordinates{font-family:ui-monospace,Consolas,monospace;font-size:11px;line-height:1.4;white-space:normal;overflow-wrap:anywhere;margin:0 7px 6px;padding-bottom:9px;border-bottom:1px solid #385a6d;color:#c5dce8}
+#measureContextMenu .context-section-title{padding:10px 9px 5px;font-weight:800;letter-spacing:.11em;color:#779fb0;font-size:9.5px}
+#measureContextMenu #measureMenuSection{border-bottom:1px solid #385a6d;padding-bottom:7px;margin-bottom:3px}
+#measureContextMenu #measureMenuSection[hidden]{display:none}
+#measureContextMenu button{display:flex;align-items:center;min-height:38px;margin:4px 3px;padding:9px 11px;border-radius:7px;border:1px solid #395a71;color:#e5f5fb;background:#204157;font-size:12px}
+#measureContextMenu button:hover:not(:disabled){background:#27647b;border-color:#59afc8}
+#measureContextMenu button.context-weather-action{background:#15495b;border-color:#328ba0;color:#9beaf2}
+#measureContextMenu button.context-weather-action:hover{background:#216577}
+#measureContextMenu button.danger{background:#4b3035;color:#ffc9ca;border-color:#754a52}
+#measureContextMenu button:focus-visible{outline:2px solid #69def0;outline-offset:1px}
+/* Windy-style small map weather card (model forecast) */
+.poligon-weather-popup .leaflet-popup-content-wrapper{background:linear-gradient(145deg,#132c3c,#0b1c2c);color:#f1f8fd;padding:0;border-radius:14px;box-shadow:0 13px 40px #061521a8;border:1px solid #367b8b}
+.poligon-weather-popup .leaflet-popup-tip{background:#112739}
+.poligon-weather-popup .leaflet-popup-content{margin:0!important;width:auto!important}
+.poligon-weather-popup .leaflet-popup-close-button{color:#b7d7e3!important;font-weight:700!important;font-size:22px!important;top:9px!important;right:10px!important;width:29px!important;height:29px!important}
+.poligon-weather-popup .leaflet-popup-close-button:hover{color:white!important}
+.mini-weather{width:340px;max-width:min(340px,calc(100vw - 55px));font:13px/1.4 Inter,ui-sans-serif,system-ui,Arial,sans-serif;letter-spacing:0}
+.mini-weather-header{padding:15px 15px 11px;background:linear-gradient(120deg,#174a5c,#103046);border-bottom:1px solid #2a6475;border-radius:13px 13px 0 0}
+.mini-weather-eyebrow{font-size:9px;letter-spacing:.16em;font-weight:850;color:#86dae7}
+.mini-weather-title{font-size:16px;font-weight:800;color:#f2fbff;margin:4px 28px 2px 0}
+.mini-weather-position{font-size:10.5px;font-family:ui-monospace,Consolas,monospace;color:#b4d7e3;margin-top:5px;overflow-wrap:anywhere}
+.mini-weather-content{padding:11px 13px 6px}
+.mini-weather-loading{padding:18px 4px;color:#a8c3d4;text-align:center;font-size:12px}
+.mini-weather-error{background:#452c37;border:1px solid #a85c6b;border-radius:8px;padding:12px;color:#ffccd3;font-size:12px}
+.mini-weather-timebar{display:flex;align-items:center;gap:7px;justify-content:center;padding:6px 5px 11px}
+.mini-weather-timebar .mini-time{font-size:12px;font-weight:750;text-align:center;flex:1;color:#e7f4fa;white-space:nowrap}
+.mini-weather button{border-radius:7px;cursor:pointer;font:700 12px Inter,system-ui,sans-serif;min-height:29px;border:1px solid #41677a;color:#d3edf7;background:#204257;padding:5px 9px}
+.mini-weather button:hover:not(:disabled){background:#29637b}
+.mini-weather button:disabled{opacity:.34;cursor:not-allowed}
+.mini-weather-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.mini-weather-stat{min-height:102px;border-radius:9px;border:1px solid #355569;background:#112c3c;padding:10px 7px}
+.mini-weather-stat .mini-label{display:block;font-size:9.5px;letter-spacing:.095em;color:#92becd;font-weight:850;white-space:nowrap}
+.mini-weather-stat .mini-value{display:block;font-size:20px;font-weight:830;color:#eefaff;letter-spacing:-.03em;margin:8px 0 1px}
+.mini-weather-stat .mini-value small{font-size:11px;font-weight:650;margin-left:2px}
+.mini-weather-stat .mini-direction{display:block;font-size:10px;line-height:1.4;color:#b7d5e2;min-height:24px}
+.mini-weather-stat.wind .mini-value{color:#75ddec}
+.mini-weather-stat.wave .mini-value{color:#a0c7ff}
+.mini-weather-stat.current .mini-value{color:#ffda9a}
+.mini-weather-secondary{font-size:11px;line-height:1.6;color:#bfdae7;margin:10px 2px 2px}
+.mini-weather-info{font-size:10px;color:#a9c3d2;padding:8px 3px 5px;border-top:1px solid #2b4858;margin-top:9px;line-height:1.5}
+.mini-weather-foot{padding:8px 13px 12px;display:flex;align-items:center;justify-content:space-between;gap:9px}
+.mini-weather-foot button{font-size:10.5px;min-height:31px}
+.mini-weather-foot .mini-source{font-size:10px;color:#87bbc8}
+.mini-weather-warning{font-size:9.5px;color:#e8c78f;margin:4px 3px 0;line-height:1.45}
+@media(max-width:750px){.mini-weather{width:305px}.mini-weather-stat{min-height:94px}.mini-weather-stat .mini-value{font-size:18px}}
 </style></head><body><div id="app"><aside aria-label="Poligon controls"><div class="app-brand">
   <div class="brand-logo" aria-hidden="true">P<span>·</span></div>
   <div class="brand-copy"><div class="brand-eyebrow">MARITIME OPERATIONS</div><div class="brand-title">POLIGON <span>Mapper</span></div><div class="brand-subtitle">Geospatial planning workspace</div></div>
@@ -290,7 +339,21 @@ details[open]>.accordion-trigger .accordion-chevron{transform:rotate(225deg) tra
 <p class="muted"><a style="color:#91d9ff" href="https://www.imo.org/en/ourwork/safety/pages/globalsarplan.aspx" target="_blank" rel="noopener">IMO GISIS Global SAR Plan — authoritative verification</a></p>
 <div id="srrStatus" class="muted">Regional layer off. Line colors are stored in this browser.</div>
 <div id="globalSrrStatus" class="muted"></div></div>
-  </details></aside><div id="map"><div id="workspaceToast" class="workspace-toast" role="status" aria-live="polite"></div><div id="mapProjectSummary" aria-live="polite"><strong>0</strong> objects &nbsp;·&nbsp; <strong>0</strong> measurements saved</div><div id="israelIllustrationMapWarning" class="map-reference-warning" role="status">ISRAEL · ILLUSTRATIVE AREA — NOT AN OFFICIAL SAR BOUNDARY</div><div id="measureHud"></div><div id="measureContextMenu" role="menu" aria-label="Measurement actions"><div class="menu-title">MEASUREMENT ACTIONS</div><button id="measureMenuFinish" onclick="finishMeasure()">Finish &amp; save · Enter</button><button id="measureMenuUndo" onclick="undoMeasurePoint()">Undo last point · Backspace</button><button class="danger" onclick="cancelMeasure()">Cancel measurement · Esc</button></div></div></div><div id="hud">Move mouse over map</div><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script><script>
+  </details></aside><div id="map"><div id="workspaceToast" class="workspace-toast" role="status" aria-live="polite"></div><div id="mapProjectSummary" aria-live="polite"><strong>0</strong> objects &nbsp;·&nbsp; <strong>0</strong> measurements saved</div><div id="israelIllustrationMapWarning" class="map-reference-warning" role="status">ISRAEL · ILLUSTRATIVE AREA — NOT AN OFFICIAL SAR BOUNDARY</div><div id="measureHud"></div><div id="measureContextMenu" role="menu" aria-label="Map context actions">
+ <div id="mapMenuTitle" class="menu-title">MAP ACTIONS</div>
+ <div id="mapMenuCoordinates" class="map-context-coordinates"></div>
+ <div id="measureMenuSection" hidden>
+  <div class="context-section-title">CURRENT MEASUREMENT</div>
+  <button id="measureMenuFinish" type="button" onclick="finishMeasure()">✓ &nbsp;Finish &amp; save</button>
+  <button id="measureMenuUndo" type="button" onclick="undoMeasurePoint()">↶ &nbsp;Undo last point</button>
+  <button class="danger" type="button" onclick="cancelMeasure()">× &nbsp;Cancel measurement</button>
+ </div>
+ <div class="context-section-title">AT THIS POSITION</div>
+ <button id="mapMenuStartMeasure" type="button" onclick="measureFromContext()">⌁ &nbsp;Measure from here</button>
+ <button type="button" onclick="addContextPointToEditor()">⊕ &nbsp;Add coordinate to editor</button>
+ <button type="button" class="context-weather-action" onclick="weatherFromContext()">≋ &nbsp;Marine weather here</button>
+ <button type="button" onclick="copyContextCoordinates()">⧉ &nbsp;Copy coordinates</button>
+</div></div></div><div id="hud">Move mouse over map</div><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script><script>
 const $=id=>document.getElementById(id),KEY='poligon-v1',map=L.map('map').setView([32.5,34.5],8),group=L.layerGroup().addTo(map);
 const tiles=(name,z)=>L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/'+name+'/MapServer/tile/{z}/{y}/{x}',{maxZoom:z,attribution:'Tiles © Esri'});
 const street=tiles('World_Street_Map',19).addTo(map),ocean=tiles('Ocean/World_Ocean_Base',16),topo=tiles('World_Topo_Map',19),sat=tiles('World_Imagery',19),seamarks=L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png',{attribution:'© OpenSeaMap',maxZoom:18}).addTo(map);
