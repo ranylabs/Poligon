@@ -168,7 +168,7 @@ function srrFeatureColor(feature,scope){
  const key=srrKey(feature,scope);
  let stored=srrColors[key];
  if(validColor(stored))return stored;
- let initial=feature.properties?.color||scopeDefaultColor[scope]||'#a1bdcc';
+ let initial=feature.properties?.display_color||feature.properties?.color||scopeDefaultColor[scope]||'#a1bdcc';
  return validColor(initial)?initial:'#a1bdcc';
 }
 function srrStyle(feature,scope){
