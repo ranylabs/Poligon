@@ -141,6 +141,8 @@ const globalSrrDatasets={
  }
 };
 let srrColors={};
+if(!map.getPane('srrReferencePane'))map.createPane('srrReferencePane');
+map.getPane('srrReferencePane').style.zIndex='375';
 try{
   const saved=JSON.parse(localStorage.getItem(SRR_COLOR_KEY)||'{}');
   if(saved&&typeof saved==='object'&&!Array.isArray(saved))srrColors=saved;
@@ -161,7 +163,7 @@ function srrFeatureColor(feature,scope){
 }
 function srrStyle(feature,scope){
  const p=feature.properties||{};
- const partial=(p.geometry_status||'').includes('partial')||(p.geometry?.type==='LineString');
+ const partial=(p.geometry_status||'').includes('partial')||feature.geometry?.type==='LineString'||feature.geometry?.type==='MultiLineString';
  const color=srrFeatureColor(feature,scope);
  return {color,weight:partial?3:2.6,opacity:.94,dashArray:partial?'8 5':null,
    fillColor:color,fillOpacity:partial?0:(scope==='eastmed'?.09:.045),
@@ -212,6 +214,7 @@ function makeSrrLayer(data,scope='eastmed'){
   if(!Array.isArray(data.features)||data.features.length>2000)throw Error('Invalid or too-large layer');
  }
  return L.geoJSON(data,{
+  pane:'srrReferencePane',
   style:f=>srrStyle(f,scope),
   onEachFeature:(f,l)=>{
    const p=f.properties||{};
@@ -268,6 +271,7 @@ async function toggleGlobalSrr(scope,visible){
  if(!visible){
   const previous=globalSrrLayers[scope];
   if(previous)map.removeLayer(previous);
+  if(previous&&previous._addedAttribution){map.attributionControl.removeAttribution(config.attribution);previous._addedAttribution=false}
   status.textContent=config.label+' hidden.';return;
  }
  try{
@@ -281,7 +285,7 @@ async function toggleGlobalSrr(scope,visible){
   }
   if(!$(checkboxId).checked)return;
   globalSrrLayers[scope].addTo(map);
-  map.attributionControl.addAttribution(config.attribution);
+  if(!globalSrrLayers[scope]._addedAttribution){map.attributionControl.addAttribution(config.attribution);globalSrrLayers[scope]._addedAttribution=true}
   status.textContent=config.label+' loaded. Incomplete worldwide coverage; not operational SRR authority data.';
  }catch(e){
   $(checkboxId).checked=false;
