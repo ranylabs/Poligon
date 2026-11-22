@@ -358,7 +358,7 @@ const $=id=>document.getElementById(id),KEY='poligon-v1',map=L.map('map').setVie
 const tiles=(name,z)=>L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/'+name+'/MapServer/tile/{z}/{y}/{x}',{maxZoom:z,attribution:'Tiles © Esri'});
 const street=tiles('World_Street_Map',19).addTo(map),ocean=tiles('Ocean/World_Ocean_Base',16),topo=tiles('World_Topo_Map',19),sat=tiles('World_Imagery',19),seamarks=L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png',{attribution:'© OpenSeaMap',maxZoom:18}).addTo(map);
 L.control.layers({Street:street,Ocean:ocean,Topographic:topo,Satellite:sat},{'Marine seamarks':seamarks}).addTo(map);
-let objects=[],measures=[],mode='',draft=[],preview=null,editing=-1,selected=null,weatherPin=null;
+let objects=[],measures=[],mode='',draft=[],preview=null,editing=-1,selected=null,weatherPin=null,mapContextLatLng=null,mapContextSnapped=false;
 const clean=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),norm=s=>String(s).toUpperCase().replace(/[′’‘]/g,"'").replace(/[″“”]/g,'"').replace(/[º˚]/g,'°');
 function parse(s,t){s=norm(s).trim();let h=s.match(/[NSEW]/)?.[0];if(h&&!(t==='lat'?'NS':'EW').includes(h))return null;let a=s.replace(/[NSEW°'"]/g,' ').match(/[-+]?\d+(?:\.\d+)?/g);if(!a||a.length>3)return null;let d=+a[0],m=+(a[1]||0),v=+(a[2]||0);if(m>=60||v>=60)return null;let x=(Math.abs(d)+m/60+v/3600)*(h?(h==='S'||h==='W'?-1:1):d<0?-1:1);return Math.abs(x)<=(t==='lat'?90:180)?x:null}
 function ddm(x,t){let a=Math.abs(x),d=Math.floor(a),m=(a-d)*60;return String(d).padStart(t==='lat'?2:3,'0')+'°'+m.toFixed(3).padStart(6,'0')+"'"+(t==='lat'?(x>=0?'N':'S'):(x>=0?'E':'W'))}
@@ -699,15 +699,76 @@ function undoMeasurePoint(){
  if(draft.length>1)preview=L.polyline(draft,{color:'#ffc04a',dashArray:'5 5',weight:3,interactive:false}).addTo(map);
  updateMeasureDisplay();
 }
+function nearestVisibleVertexAtScreen(clientX,clientY){
+ const bounds=map.getContainer().getBoundingClientRect();
+ const mouse=L.point(clientX-bounds.left,clientY-bounds.top);
+ let found=null,bestDistance=10;
+ for(const geometry of [...objects,...measures]){
+  if(geometry.visible===false||!Array.isArray(geometry.points))continue;
+  for(const point of geometry.points){
+   const delta=map.latLngToContainerPoint(point).distanceTo(mouse);
+   if(delta<bestDistance){bestDistance=delta;found=L.latLng(point[0],point[1])}
+  }
+ }
+ return found;
+}
 function showMeasureMenu(event){
- if(mode!=='measure')return;
  const menu=$('measureContextMenu'), box=map.getContainer().getBoundingClientRect();
+ const snapped=nearestVisibleVertexAtScreen(event.clientX,event.clientY);
+ mapContextLatLng=snapped||map.mouseEventToLatLng(event);
+ mapContextSnapped=!!snapped;
+ $('mapMenuTitle').textContent=mode==='measure'?'MEASUREMENT / MAP':'MAP ACTIONS';
+ $('mapMenuCoordinates').textContent=
+   ddm(mapContextLatLng.lat,'lat')+'   '+ddm(mapContextLatLng.lng,'lon')+
+   (mapContextSnapped?'  ·  Snapped to saved point':'');
+ $('measureMenuSection').hidden=mode!=='measure';
  $('measureMenuFinish').disabled=draft.length<2;
  $('measureMenuUndo').disabled=draft.length<1;
+ $('mapMenuStartMeasure').textContent=mode==='measure'?'⌁  Add measurement point here':'⌁  Measure from here';
  menu.style.display='block';
- const x=event.clientX-box.left, y=event.clientY-box.top;
- menu.style.left=Math.max(5,Math.min(x,box.width-menu.offsetWidth-5))+'px';
- menu.style.top=Math.max(5,Math.min(y,box.height-menu.offsetHeight-5))+'px';
+ const x=event.clientX-box.left,y=event.clientY-box.top;
+ const maxX=Math.max(5,box.width-menu.offsetWidth-5);
+ const maxY=Math.max(5,box.height-menu.offsetHeight-5);
+ menu.style.left=Math.max(5,Math.min(x,maxX))+'px';
+ menu.style.top=Math.max(5,Math.min(y,maxY))+'px';
+}
+function measureFromContext(){
+ const target=mapContextLatLng;
+ closeMeasureMenu();
+ if(!target)return;
+ if(mode!=='measure')toggleMode('measure');
+ revealAccordion('panel-measure',false);
+ processMapSelection(target);
+}
+function addContextPointToEditor(){
+ const target=mapContextLatLng;
+ closeMeasureMenu();
+ if(!target)return;
+ const rows=[...document.querySelectorAll('#points .pt')];
+ if(rows.length===1&&!rows[0].querySelector('.lat').value.trim()&&!rows[0].querySelector('.lon').value.trim())rows[0].remove();
+ addPoint(ddm(target.lat,'lat'),ddm(target.lng,'lon'));
+ updatePlotChoices();
+ revealAccordion('panel-points',true);
+ notifyWorkspace('Coordinate added to the editor: '+ddm(target.lat,'lat')+' '+ddm(target.lng,'lon'));
+}
+function weatherFromContext(){
+ const target=mapContextLatLng;
+ closeMeasureMenu();
+ if(!target)return;
+ openCompactWeatherAt(target);
+}
+async function copyContextCoordinates(){
+ const target=mapContextLatLng;
+ closeMeasureMenu();
+ if(!target)return;
+ const value=ddm(target.lat,'lat')+' '+ddm(target.lng,'lon');
+ try{
+  if(!navigator.clipboard?.writeText)throw Error('Clipboard API unavailable');
+  await navigator.clipboard.writeText(value);
+  notifyWorkspace('Coordinates copied: '+value);
+ }catch(error){
+  window.prompt('Copy coordinates:',value);
+ }
 }
 function processMapSelection(latlng){
   const p=[latlng.lat,latlng.lng];
@@ -731,7 +792,7 @@ function processMapSelection(latlng){
 }
 map.on('click',e=>processMapSelection(e.latlng));
 function onMapPointerMove(ev){
-  if(ev.target?.closest?.('.leaflet-control, #measureContextMenu'))return;
+  if(ev.target?.closest?.('.leaflet-control, .leaflet-popup, #measureContextMenu'))return;
   const location=map.mouseEventToLatLng(ev);
   $('hud').textContent=ddm(location.lat,'lat')+'  '+ddm(location.lng,'lon')+' · '+location.lat.toFixed(6)+', '+location.lng.toFixed(6);
   if(mode==='measure'){
@@ -745,10 +806,18 @@ function onMapPointerMove(ev){
 }
 map.getContainer().addEventListener('pointermove',onMapPointerMove,{capture:true,passive:true});
 map.getContainer().addEventListener('contextmenu',event=>{
- if(mode!=='measure'||event.target?.closest?.('.leaflet-control, #measureContextMenu'))return;
+ if(event.target?.closest?.('.leaflet-control, .leaflet-popup, #measureContextMenu'))return;
  event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
  showMeasureMenu(event);
 },true);
+map.getContainer().addEventListener('pointerdown',event=>{
+ if(!event.target?.closest?.('#measureContextMenu'))closeMeasureMenu();
+},true);
+document.addEventListener('keydown',event=>{
+ if(event.key==='Escape'&&mode!=='measure'&&$('measureContextMenu').style.display==='block'){
+  event.preventDefault();closeMeasureMenu();
+ }
+});
 $('measureContextMenu').addEventListener('click',ev=>ev.stopPropagation());
 $('measureContextMenu').addEventListener('dblclick',ev=>ev.stopPropagation());
 $('measureContextMenu').addEventListener('mousedown',ev=>ev.stopPropagation());
@@ -763,7 +832,7 @@ document.addEventListener('keydown',event=>{
    else cancelMeasure();
  }
 });
-map.on('contextmenu',e=>{let s=ddm(e.latlng.lat,'lat')+' '+ddm(e.latlng.lng,'lon');if(navigator.clipboard)navigator.clipboard.writeText(s).catch(()=>prompt('Copy',s));else prompt('Copy',s)});
+/* Right-click is handled by the unified map action menu above. */
 function save(){try{localStorage.setItem('poligon-v1',JSON.stringify({objects,measures}))}catch(e){console.warn(e)}}function deleteAll(){if(confirm('Delete all objects?')){objects=[];save();draw()}}
 function download(n,c,t){let u=URL.createObjectURL(new Blob([c],{type:t})),a=document.createElement('a');a.href=u;a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
 function exportKML(){let s='<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document>';for(let o of objects){let c=o.points.map(p=>p[1]+','+p[0]+',0').join(' '),g=o.type==='Point'?'<Point><coordinates>'+c+'</coordinates></Point>':o.type==='Route'?'<LineString><coordinates>'+c+'</coordinates></LineString>':'<Polygon><outerBoundaryIs><LinearRing><coordinates>'+c+' '+o.points[0][1]+','+o.points[0][0]+',0</coordinates></LinearRing></outerBoundaryIs></Polygon>';s+='<Placemark><name>'+clean(o.name)+'</name>'+g+'</Placemark>'}download('Poligon.kml',s+'</Document></kml>','application/vnd.google-earth.kml+xml')}
