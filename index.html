@@ -50,7 +50,7 @@ function bindSelectable(layer, snappedPoint=null){
 }
 function bindControlledPopup(layer,html){
   layer.bindPopup(html);
-  if(layer._openPopup)layer.off('click',layer._openPopup,layer);
+  if(layer._openPopup)layer.off('click',layer._openPopup);
   layer.on('click',ev=>{if(!mode)layer.openPopup(ev.latlng)});
   return layer;
 }
