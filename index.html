@@ -153,6 +153,23 @@ details[open]>.accordion-trigger .accordion-chevron{transform:rotate(225deg) tra
 @media(max-width:900px){aside{width:383px;min-width:340px}#hud{left:395px}}
 @media(max-width:750px){aside{width:100%;min-width:0;height:54vh}#hud{left:9px;max-width:calc(100% - 18px)}.accordion-trigger{min-height:57px}}
 @media(prefers-reduced-motion:reduce){.accordion-trigger,.accordion-chevron{transition:none}.accordion-tool[open]>.accordion-content{animation:none}}
+
+/* Explicit geometry save step in coordinate editor */
+.point-editor-actions{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0 0}
+.point-editor-actions button{flex:1;min-width:145px}
+.plot-choice{background:linear-gradient(158deg,#123346,#0d2937);border:1px solid #3f8091;border-radius:10px;padding:12px;margin:13px 0 12px;box-shadow:inset 0 1px 0 #6aced61f}
+.plot-choice-label{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;letter-spacing:.12em;font-weight:850;color:#76d7e8}
+.plot-point-count{background:#1b4859;border-radius:20px;padding:3px 8px;font-size:10.5px;letter-spacing:0;color:#cbe5ed;font-weight:650;white-space:nowrap}
+.plot-choice-help{font-size:12.5px;line-height:1.5;color:#b3d0db;margin:9px 0 10px}
+.plot-choice-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.plot-choice [hidden]{display:none!important}
+.tool-panel button.plot-main-button{border-radius:7px;padding:11px 8px;min-height:47px;width:100%;margin:0;font-size:13.5px;font-weight:850;color:#082332;box-shadow:0 5px 14px #0523304d;border:1px solid #54cee3}
+.tool-panel button.plot-polygon,.tool-panel #singlePlotButton{background:linear-gradient(120deg,#4bdbe9,#219ddd)}
+.tool-panel button.plot-polygon:hover,.tool-panel #singlePlotButton:hover{background:linear-gradient(120deg,#88eaf1,#49bde5)}
+.tool-panel button.plot-route{background:linear-gradient(120deg,#65dfb7,#36b69a);border-color:#80e6c6;color:#06332b}
+.tool-panel button.plot-route:hover{background:linear-gradient(120deg,#8af0d0,#58d8ba)}
+.plot-choice-buttons button.is-current{box-shadow:0 0 0 2px #ffffff75 inset,0 5px 14px #071c2955}
+@media(max-width:390px){.plot-choice-buttons{grid-template-columns:1fr}.plot-main-button{min-height:44px}}
 </style></head><body><div id="app"><aside aria-label="Poligon controls"><div class="app-brand">
   <div class="brand-logo" aria-hidden="true">P<span>·</span></div>
   <div class="brand-copy"><div class="brand-eyebrow">MARITIME OPERATIONS</div><div class="brand-title">POLIGON <span>Mapper</span></div><div class="brand-subtitle">Geospatial planning workspace</div></div>
@@ -182,7 +199,7 @@ details[open]>.accordion-trigger .accordion-chevron{transform:rotate(225deg) tra
       <span class="accordion-title"><span class="tool-index">01</span><span>Object settings</span></span>
       <span class="accordion-chevron" aria-hidden="true"></span>
     </summary>
-    <div class="accordion-content"><input id="name" placeholder="Object name" style="width:100%"><div class="row"><label>Color <input id="color" type="color" value="#2da6e9"></label><label>Buffer NM <input id="buffer" type="number" min="0" step=".1" value="0" style="width:70px"></label></div><select id="shape" style="width:100%"><option value="auto">Automatic: polygon for 3+ points</option><option value="route">Route / open line</option><option value="polygon">Polygon / closed area</option></select></div>
+    <div class="accordion-content"><input id="name" placeholder="Object name" style="width:100%"><div class="row"><label>Color <input id="color" type="color" value="#2da6e9"></label><label>Buffer NM <input id="buffer" type="number" min="0" step=".1" value="0" style="width:70px"></label></div><p class="tool-hint">Choose Polygon or Route after entering the coordinates in the editor below. Geometry type is always explicit for 3+ points.</p></div>
   </details><details class="accordion-tool tool-panel" id="panel-paste">
     <summary class="accordion-trigger" aria-label="Expand or collapse Paste coordinates">
       <span class="accordion-title"><span class="tool-index">02</span><span>Paste coordinates</span></span>
@@ -194,7 +211,26 @@ details[open]>.accordion-trigger .accordion-chevron{transform:rotate(225deg) tra
       <span class="accordion-title"><span class="tool-index">03</span><span>Coordinate editor</span></span>
       <span class="accordion-chevron" aria-hidden="true"></span>
     </summary>
-    <div class="accordion-content"><div id="points"></div><button onclick="addPoint()">+ Point</button><button id="addbtn" onclick="toggleMode('add')">+ From map</button><button class="primary-action" onclick="plot()">⬡ &nbsp;Plot & Save object</button><button onclick="resetEditor()">Clear editor</button><p class="tool-hint">After saving, find the object in <b>Your Workspace</b> at the top of this panel.</p></div>
+    <div class="accordion-content">
+ <div id="points"></div>
+ <div class="point-editor-actions">
+  <button onclick="addPoint()">+ Add coordinate</button>
+  <button id="addbtn" onclick="toggleMode('add')">+ From map</button>
+ </div>
+ <div id="plotChoice" class="plot-choice">
+  <div class="plot-choice-label">SAVE GEOMETRY <span id="plotPointCount" class="plot-point-count">0 valid points</span></div>
+  <p id="plotChoiceHelp" class="plot-choice-help" aria-live="polite">Enter at least one complete latitude / longitude pair.</p>
+  <div id="singlePlotOption" hidden>
+   <button id="singlePlotButton" type="button" class="plot-main-button" onclick="saveSingleGeometry()">Save point</button>
+  </div>
+  <div id="multiplePlotOptions" class="plot-choice-buttons" hidden>
+   <button id="plotPolygonButton" class="plot-main-button plot-polygon" type="button" onclick="plot('Polygon')" title="Close the last coordinate back to the first">⬡ &nbsp;Plot Polygon</button>
+   <button id="plotRouteButton" class="plot-main-button plot-route" type="button" onclick="plot('Route')" title="Connect the coordinates as an open route">⌁ &nbsp;Plot Route</button>
+  </div>
+ </div>
+ <button class="quiet-action" onclick="resetEditor()">Clear editor</button>
+ <p class="tool-hint">Saved objects appear in <b>Your Workspace</b> above. Polygons close automatically; routes remain open.</p>
+ </div>
   </details><details class="accordion-tool tool-panel measure-tool" id="panel-measure">
     <summary class="accordion-trigger" aria-label="Expand or collapse Measure distance · NM / °T">
       <span class="accordion-title"><span class="tool-index">04</span><span>Measure distance · NM / °T</span></span>
@@ -263,13 +299,74 @@ let objects=[],measures=[],mode='',draft=[],preview=null,editing=-1,selected=nul
 const clean=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),norm=s=>String(s).toUpperCase().replace(/[′’‘]/g,"'").replace(/[″“”]/g,'"').replace(/[º˚]/g,'°');
 function parse(s,t){s=norm(s).trim();let h=s.match(/[NSEW]/)?.[0];if(h&&!(t==='lat'?'NS':'EW').includes(h))return null;let a=s.replace(/[NSEW°'"]/g,' ').match(/[-+]?\d+(?:\.\d+)?/g);if(!a||a.length>3)return null;let d=+a[0],m=+(a[1]||0),v=+(a[2]||0);if(m>=60||v>=60)return null;let x=(Math.abs(d)+m/60+v/3600)*(h?(h==='S'||h==='W'?-1:1):d<0?-1:1);return Math.abs(x)<=(t==='lat'?90:180)?x:null}
 function ddm(x,t){let a=Math.abs(x),d=Math.floor(a),m=(a-d)*60;return String(d).padStart(t==='lat'?2:3,'0')+'°'+m.toFixed(3).padStart(6,'0')+"'"+(t==='lat'?(x>=0?'N':'S'):(x>=0?'E':'W'))}
-function addPoint(a='',b=''){let e=document.createElement('div');e.className='pt';e.innerHTML='<input class="lat" placeholder="Latitude"><input class="lon" placeholder="Longitude"><button onclick="this.parentNode.remove()">×</button>';e.querySelector('.lat').value=a;e.querySelector('.lon').value=b;$('points').appendChild(e)}
+function addPoint(a='',b=''){
+ const e=document.createElement('div');e.className='pt';
+ e.innerHTML='<input class="lat" placeholder="Latitude"><input class="lon" placeholder="Longitude"><button type="button" aria-label="Remove coordinate" onclick="removeCoordinateRow(this)">×</button>';
+ e.querySelector('.lat').value=a;e.querySelector('.lon').value=b;
+ $('points').appendChild(e);updatePlotChoices();
+}
+function removeCoordinateRow(button){
+ button.parentElement.remove();updatePlotChoices();
+}
+function getCoordinateEditorStatus(){
+ let valid=0,invalid=0;
+ for(const row of document.querySelectorAll('#points .pt')){
+  const a=row.querySelector('.lat').value.trim(), b=row.querySelector('.lon').value.trim();
+  if(!a&&!b)continue;
+  const latitude=parse(a,'lat'),longitude=parse(b,'lon');
+  if(latitude===null||longitude===null)invalid++;
+  else valid++;
+ }
+ return {valid,invalid};
+}
+function updatePlotChoices(){
+ const single=$('singlePlotOption'),multiple=$('multiplePlotOptions'),help=$('plotChoiceHelp');
+ if(!single||!multiple||!help)return;
+ const {valid,invalid}=getCoordinateEditorStatus();
+ $('plotPointCount').textContent=valid+' valid point'+(valid===1?'':'s');
+ single.hidden=true;multiple.hidden=true;
+ $('plotPolygonButton').classList.remove('is-current');
+ $('plotRouteButton').classList.remove('is-current');
+ const editingObject=editing>=0?objects[editing]:null;
+ if(invalid){
+  help.textContent=invalid+' incomplete or invalid coordinate row'+(invalid===1?'':'s')+'. Complete or remove them before saving.';
+  return;
+ }
+ if(valid===0){help.textContent='Enter at least one complete latitude / longitude pair.';return}
+ if(valid<=2){
+  single.hidden=false;
+  const kind=valid===1?'Point':'Route';
+  $('singlePlotButton').textContent=(editingObject?'Update ':'Save ')+kind;
+  help.textContent=valid===1?'One coordinate creates a point marker.':'Two coordinates create one open line.';
+  return;
+ }
+ multiple.hidden=false;
+ $('plotPolygonButton').textContent=editingObject?'⬡  Update as Polygon':'⬡  Plot Polygon';
+ $('plotRouteButton').textContent=editingObject?'⌁  Update as Route':'⌁  Plot Route';
+ if(editingObject){
+  const current=editingObject.type;
+  if(current==='Polygon')$('plotPolygonButton').classList.add('is-current');
+  if(current==='Route')$('plotRouteButton').classList.add('is-current');
+  help.textContent='Editing '+editingObject.type+': keep this type or choose the other geometry below.';
+ }else help.textContent='Polygon closes the area. Route connects the points without closing.';
+}
+function saveSingleGeometry(){
+ const {valid,invalid}=getCoordinateEditorStatus();
+ if(invalid||valid<1||valid>2){alert('Complete the coordinate table first.');return}
+ plot(valid===1?'Point':'Route');
+}
+$('points').addEventListener('input',updatePlotChoices);
+$('points').addEventListener('change',updatePlotChoices);
 function detect(){let s=norm($('paste').value),res=[];let part=String.raw`\d{1,3}(?:\.\d+)?(?:\s*°?\s*\d{1,2}(?:\.\d+)?)?(?:\s*['"]?\s*\d{1,2}(?:\.\d+)?)?`;let re=new RegExp('('+part+'\\s*[\'"]?\\s*[NS])\\s*[,;|/:-]?\\s*('+part+'\\s*[\'"]?\\s*[EW])','g'),m;while((m=re.exec(s))){let a=parse(m[1],'lat'),b=parse(m[2],'lon');if(a!==null&&b!==null)res.push([a,b])}if(!res.length)for(let line of s.split('\n')){let m=line.match(/([-+]?\d{1,2}\.\d+)\s*[,;\s]\s*([-+]?\d{1,3}\.\d+)/);if(m&&Math.abs(+m[1])<=90&&Math.abs(+m[2])<=180)res.push([+m[1],+m[2]])}if(res.length){$('points').innerHTML='';res.forEach(p=>addPoint(ddm(p[0],'lat'),ddm(p[1],'lon')));revealAccordion('panel-points',true)}$('detected').textContent=res.length+' coordinate pairs detected'}
 function points(){let out=[];for(let r of document.querySelectorAll('.pt')){let a=r.querySelector('.lat').value,b=r.querySelector('.lon').value;if(!a&&!b)continue;let x=parse(a,'lat'),y=parse(b,'lon');if(x===null||y===null)throw Error('Invalid coordinate: '+a+' '+b);out.push([x,y])}return out}
-function resetEditor(){$('points').innerHTML='';addPoint();$('name').value='';$('buffer').value=0;editing=-1}
-function plot(){try{
+function resetEditor(){$('points').innerHTML='';$('name').value='';$('buffer').value=0;editing=-1;addPoint();updatePlotChoices()}
+function plot(requestedType){try{
  const p=points();if(!p.length)throw Error('Enter coordinates');
- const type=p.length===1?'Point':p.length===2?'Route':$('shape').value==='route'?'Route':'Polygon';
+ let type;
+ if(p.length===1)type='Point';
+ else if(p.length===2)type='Route';
+ else if(requestedType==='Polygon'||requestedType==='Route')type=requestedType;
+ else throw Error('Choose Plot Polygon or Plot Route below the coordinate table.');
  const obj={name:$('name').value||type+' '+(objects.length+1),type,color:$('color').value,buffer:Math.max(0,+$('buffer').value||0),points:p,visible:true};
  const updated=editing>=0;
  if(updated)objects[editing]=obj;else objects.push(obj);
@@ -406,8 +503,9 @@ function lists(){
    {label:'⌕ Focus',click:()=>zoom(o.points),title:'Zoom the map to this saved object'},
    {label:'✎ Edit',click:()=>{
       editing=i;$('name').value=o.name;$('color').value=o.color;$('buffer').value=o.buffer;
-      $('shape').value=o.type==='Route'?'route':'polygon';$('points').replaceChildren();
+      $('points').replaceChildren();
       o.points.forEach(p=>addPoint(ddm(p[0],'lat'),ddm(p[1],'lon')));
+      updatePlotChoices();
       revealAccordion('panel-object',false);
       revealAccordion('panel-points',false);
       $('name').focus();
