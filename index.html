@@ -840,6 +840,186 @@ function exportJSON(){download('Poligon-project.json',JSON.stringify({objects,me
 function importJSON(e){let f=e.target.files[0];if(!f)return;f.text().then(s=>{let d=JSON.parse(s);if(!Array.isArray(d.objects)||!Array.isArray(d.measures))throw Error('Invalid project');objects=d.objects;measures=d.measures;save();draw();fitAll()}).catch(e=>alert(e.message))}
 function utc(){let d=new Date(),p=n=>String(n).padStart(2,'0');return d.getUTCFullYear()+'-'+p(d.getUTCMonth()+1)+'-'+p(d.getUTCDate())+'T'+p(d.getUTCHours())+':00'}$('hour').value=utc();
 async function weather(){if(!selected){$('weatherData').textContent='Select a position first';return}let [lat,lon]=selected,t=$('hour').value.slice(0,13)+':00';$('weatherData').textContent='Loading...';try{let w='https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m&wind_speed_unit=kn&timezone=GMT&forecast_days=7',m='https://marine-api.open-meteo.com/v1/marine?latitude='+lat+'&longitude='+lon+'&hourly=wave_height,wave_direction,ocean_current_velocity,ocean_current_direction&timezone=GMT&forecast_days=7';let [a,b]=await Promise.all([fetch(w).then(r=>{if(!r.ok)throw Error('Weather API '+r.status);return r.json()}),fetch(m).then(r=>{if(!r.ok)throw Error('Marine API '+r.status);return r.json()})]);let i=a.hourly.time.indexOf(t),j=b.hourly.time.indexOf(t);if(i<0||j<0)throw Error('Hour outside forecast');let f=(x,u)=>x==null?'Unavailable':Number(x).toFixed(1)+' '+u,h=a.hourly,k=b.hourly;let c=k.ocean_current_velocity[j];$('weatherData').innerHTML='<b>'+t+' UTC</b><br>Wind '+f(h.wind_speed_10m[i],'kt')+' from '+f(h.wind_direction_10m[i],'°')+'<br>Gusts '+f(h.wind_gusts_10m[i],'kt')+'<br>Significant waves '+f(k.wave_height[j],'m')+'<br>Wave direction '+f(k.wave_direction[j],'°')+'<br>Current '+(c==null?'Unavailable':(c/1.852).toFixed(2)+' kt')+' toward '+f(k.ocean_current_direction[j],'°')+'<br><small>Open-Meteo model forecasts; current converted from km/h to knots. Nearshore limitations.</small>'}catch(e){$('weatherData').textContent='Unavailable: '+e.message}}
+
+/* Lightweight map-anchored, time-steppable Marine Weather (Open-Meteo forecast). */
+const miniForecastCache=new Map();
+let miniWeatherRequestId=0,miniWeatherState=null;
+function miniWeatherHourUTC(){
+ const value=$('hour')?.value||'';
+ if(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value))return value.slice(0,13)+':00';
+ return new Date().toISOString().slice(0,13)+':00';
+}
+function miniCurrentKn(value,unit){
+ if(value===null||value===undefined||!Number.isFinite(Number(value)))return null;
+ const speed=Number(value);
+ const normalized=String(unit||'km/h').toLowerCase().trim();
+ if(normalized==='km/h')return speed/1.852;
+ if(normalized==='m/s')return speed*1.943844492;
+ if(normalized==='mph')return speed*.868976242;
+ if(normalized==='kn'||normalized==='knot'||normalized==='knots')return speed;
+ return null;
+}
+function miniValue(value,decimals=1){
+ return value!==null&&value!==undefined&&Number.isFinite(Number(value))?Number(value).toFixed(decimals):'—';
+}
+function miniDirection(value,prefix){
+ if(value===null||value===undefined||!Number.isFinite(Number(value)))return 'Direction unavailable';
+ const normalized=(Number(value)%360+360)%360;
+ return prefix+' '+Math.round(normalized)+'° '+compass16(normalized);
+}
+async function miniFetchJSON(url){
+ const response=await fetch(url);
+ if(!response.ok)throw Error('HTTP '+response.status);
+ const json=await response.json();
+ if(json.error)throw Error(json.reason||'Provider error');
+ return json;
+}
+async function miniLoadWeather(latitude,longitude,refresh=false){
+ const key=latitude.toFixed(3)+','+longitude.toFixed(3);
+ const cached=miniForecastCache.get(key);
+ if(!refresh&&cached&&Date.now()-cached.at<8*60*1000)return cached.promise;
+ const params='latitude='+encodeURIComponent(latitude)+'&longitude='+encodeURIComponent(longitude)+'&timezone=GMT&forecast_days=7';
+ const weatherUrl='https://api.open-meteo.com/v1/forecast?'+params+'&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m&wind_speed_unit=kn';
+ const marineUrl='https://marine-api.open-meteo.com/v1/marine?'+params+'&hourly=wave_height,wave_direction,wave_period,ocean_current_velocity,ocean_current_direction&cell_selection=sea';
+ const promise=Promise.allSettled([miniFetchJSON(weatherUrl),miniFetchJSON(marineUrl)])
+  .then(results=>{
+    const wind=results[0].status==='fulfilled'?results[0].value:null;
+    const marine=results[1].status==='fulfilled'?results[1].value:null;
+    if(!wind&&!marine)throw Error('Weather and marine forecast services are unavailable. Check your connection.');
+    return {wind,marine,issues:results.map((result,i)=>result.status==='rejected'?(i===0?'Wind':'Marine')+' data unavailable':null).filter(Boolean)};
+  });
+ miniForecastCache.set(key,{promise,at:Date.now()});
+ try{return await promise}catch(error){miniForecastCache.delete(key);throw error}
+}
+function miniHourlyTimes(forecast){
+ return [...new Set([...(forecast.wind?.hourly?.time||[]),...(forecast.marine?.hourly?.time||[])])].sort();
+}
+function miniHourIndex(times,value){
+ const exact=times.indexOf(value);
+ if(exact>=0)return exact;
+ const requested=new Date(value+':00Z').getTime();
+ if(!Number.isFinite(requested))return 0;
+ let chosen=0,closest=Infinity;
+ times.forEach((time,i)=>{
+  const gap=Math.abs(new Date(time+':00Z').getTime()-requested);
+  if(gap<closest){closest=gap;chosen=i}
+ });
+ return chosen;
+}
+function miniWeatherTile(icon,label,value,unit,direction,klass){
+ return '<div class="mini-weather-stat '+klass+'"><div class="mini-label">'+icon+' '+label+'</div>'+
+ '<span class="mini-value">'+value+'<small>'+unit+'</small></span>'+
+ '<span class="mini-direction">'+direction+'</span></div>';
+}
+function miniRenderWeather(state){
+ if(!state?.root?.isConnected||!state.forecast)return;
+ const {root,forecast}=state;
+ const times=miniHourlyTimes(forecast);
+ if(!times.length){
+  root.querySelector('.mini-weather-content').innerHTML='<div class="mini-weather-error">No hourly forecast available at this location.</div>';
+  return;
+ }
+ let idx=miniHourIndex(times,state.hour);
+ state.hour=times[idx];
+ const w=forecast.wind?.hourly, m=forecast.marine?.hourly;
+ const wi=w?.time?.indexOf(state.hour)??-1, mi=m?.time?.indexOf(state.hour)??-1;
+ const windSpeed=wi>=0?w.wind_speed_10m?.[wi]:null;
+ const windDirection=wi>=0?w.wind_direction_10m?.[wi]:null;
+ const gust=wi>=0?w.wind_gusts_10m?.[wi]:null;
+ const waveHeight=mi>=0?m.wave_height?.[mi]:null;
+ const waveDirection=mi>=0?m.wave_direction?.[mi]:null;
+ const wavePeriod=mi>=0?m.wave_period?.[mi]:null;
+ const currentVelocity=mi>=0?m.ocean_current_velocity?.[mi]:null;
+ const currentUnit=forecast.marine?.hourly_units?.ocean_current_velocity||'km/h';
+ const currentKn=miniCurrentKn(currentVelocity,currentUnit);
+ const currentDirection=mi>=0?m.ocean_current_direction?.[mi]:null;
+ const stats=miniWeatherTile('≋','WIND',miniValue(windSpeed,0),'kt',miniDirection(windDirection,'From'),'wind')+
+   miniWeatherTile('≈','WAVES',miniValue(waveHeight,1),'m',miniDirection(waveDirection,'From'),'wave')+
+   miniWeatherTile('➤','CURRENT',miniValue(currentKn,2),'kt',miniDirection(currentDirection,'To'),'current');
+ const warnings=forecast.issues.length?'<div class="mini-weather-warning">'+forecast.issues.map(clean).join(' · ')+'</div>':'';
+ const gustInfo=miniValue(gust,0)==='—'?'—':miniValue(gust,0)+' kt';
+ const periodInfo=miniValue(wavePeriod,1)==='—'?'—':miniValue(wavePeriod,1)+' s';
+ root.querySelector('.mini-weather-content').innerHTML=
+  '<div class="mini-weather-timebar"><button type="button" class="mini-prev" title="Previous forecast hour" '+(idx===0?'disabled':'')+'>‹</button>'+
+  '<div class="mini-time">'+clean(state.hour.replace('T',' · '))+' UTC</div>'+
+  '<button type="button" class="mini-next" title="Next forecast hour" '+(idx===times.length-1?'disabled':'')+'>›</button></div>'+
+  '<div class="mini-weather-stats">'+stats+'</div>'+
+  '<div class="mini-weather-secondary">Wind gusts <b>'+gustInfo+'</b> &nbsp; · &nbsp; Wave period <b>'+periodInfo+'</b></div>'+
+  warnings+
+  '<div class="mini-weather-info">Model forecast, not observed conditions. Coastal current accuracy is limited; do not use for navigation.</div>';
+ const footer=root.querySelector('.mini-weather-foot');
+ footer.innerHTML='<span class="mini-source">Open-Meteo · Weather + Marine</span><div>'+
+  '<button type="button" class="mini-refresh" title="Refresh forecast">↻</button>'+
+  '<button type="button" class="mini-details" title="Open full weather section">Details</button></div>';
+ const setIndex=next=>{
+  state.hour=times[Math.max(0,Math.min(times.length-1,next))];
+  $('hour').value=state.hour;
+  miniRenderWeather(state);
+ };
+ root.querySelector('.mini-prev')?.addEventListener('click',()=>setIndex(idx-1));
+ root.querySelector('.mini-next')?.addEventListener('click',()=>setIndex(idx+1));
+ footer.querySelector('.mini-details').addEventListener('click',()=>{
+  selected=[state.latitude,state.longitude];
+  $('hour').value=state.hour;
+  revealAccordion('panel-weather',true);
+  weather();
+ });
+ footer.querySelector('.mini-refresh').addEventListener('click',()=>miniRefreshWeather(state));
+}
+async function miniRefreshWeather(state){
+ if(!state?.root?.isConnected)return;
+ const token=++miniWeatherRequestId;state.token=token;
+ state.root.querySelector('.mini-weather-content').innerHTML='<div class="mini-weather-loading">Refreshing forecast…</div>';
+ try{
+  state.forecast=await miniLoadWeather(state.latitude,state.longitude,true);
+  if(token!==miniWeatherRequestId||!state.root.isConnected)return;
+  miniRenderWeather(state);
+ }catch(error){
+  if(token!==miniWeatherRequestId||!state.root.isConnected)return;
+  miniWeatherError(state,String(error.message||error));
+ }
+}
+function miniWeatherError(state,message){
+ if(!state.root?.isConnected)return;
+ const content=state.root.querySelector('.mini-weather-content');
+ content.innerHTML='<div class="mini-weather-error">'+clean(message)+'</div>';
+ const footer=state.root.querySelector('.mini-weather-foot');
+ footer.innerHTML='<span class="mini-source">Open-Meteo · no model data</span><button class="mini-refresh" type="button">Retry</button>';
+ footer.querySelector('.mini-refresh').addEventListener('click',()=>miniRefreshWeather(state));
+}
+function openCompactWeatherAt(latlng){
+ const latitude=latlng.lat,longitude=latlng.lng;
+ selected=[latitude,longitude];
+ if(weatherPin)map.removeLayer(weatherPin);
+ weatherPin=L.circleMarker([latitude,longitude],{
+   radius:6,weight:2,color:'#9ceef2',fillColor:'#0b7f9b',fillOpacity:1,interactive:false
+ }).addTo(map);
+ const root=document.createElement('div');
+ root.className='mini-weather';
+ root.innerHTML='<div class="mini-weather-header">'+
+   '<div class="mini-weather-eyebrow">MARINE WEATHER · OPEN-METEO</div>'+
+   '<div class="mini-weather-title">Conditions at selected point</div>'+
+   '<div class="mini-weather-position">'+clean(ddm(latitude,'lat')+'  '+ddm(longitude,'lon'))+'</div></div>'+
+   '<div class="mini-weather-content"><div class="mini-weather-loading">Loading wind, waves and currents…</div></div>'+
+   '<div class="mini-weather-foot"><span class="mini-source">Hourly model forecast · UTC</span></div>';
+ L.DomEvent.disableClickPropagation(root);
+ L.DomEvent.disableScrollPropagation(root);
+ const popup=L.popup({className:'poligon-weather-popup',maxWidth:355,minWidth:300,autoPan:true,autoPanPadding:L.point(28,35),offset:L.point(0,-6)})
+   .setLatLng([latitude,longitude]).setContent(root);
+ map.openPopup(popup);
+ const token=++miniWeatherRequestId;
+ const state={latitude,longitude,root,hour:miniWeatherHourUTC(),forecast:null,token};
+ miniWeatherState=state;
+ miniLoadWeather(latitude,longitude).then(forecast=>{
+   if(token!==miniWeatherRequestId||!root.isConnected)return;
+   state.forecast=forecast;
+   miniRenderWeather(state);
+ }).catch(error=>{
+   if(token!==miniWeatherRequestId||!root.isConnected)return;
+   miniWeatherError(state,String(error.message||error));
+ });
+}
+
 try{let d=JSON.parse(localStorage.getItem('poligon-v1')||'{}');objects=Array.isArray(d.objects)?d.objects:[];measures=Array.isArray(d.measures)?d.measures:[]}catch(e){}addPoint();draw();if(objects.length||measures.length)fitAll();
 
 
