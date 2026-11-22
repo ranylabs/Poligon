@@ -1,0 +1,573 @@
+{
+  "type": "FeatureCollection",
+  "name": "Eastern Mediterranean SAR/FIR reference — partial, not operational boundaries",
+  "metadata": {
+    "version": "2026-11-22-reference-v1",
+    "datum": "WGS84",
+    "coordinate_order": "longitude,latitude",
+    "status": "REFERENCE ONLY. Cyprus complete FIR outline with mathematically interpolated arcs; Israel and Egypt are partial boundary lines, NOT complete SRR polygons.",
+    "sources": [
+      "https://www.mcw.gov.cy/mcw/dca/AIS/ais.nsf/All/455773618044F4C9C2257C7E00234503/$file/LC_Amdt_A_2024_004_en.pdf",
+      "https://e-aip.azurefd.net/2026-08-06-AIRAC/html/eAIP/LL-ENR-2.1-en-GB.html",
+      "https://www.icao.int/MID/Documents/2014/ATM%20SG1/WP%207.pdf",
+      "https://treaties.un.org/doc/Publication/UNTS/Volume%202981/v2981.pdf"
+    ],
+    "caution": "FIR/SRR links are supported by published agreements. This overlay is NOT a GISIS export. Arcs interpolated; Egypt source 2014; territorial/country-side boundaries omitted. Do not use to determine RCC responsibility."
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "LCCC",
+      "properties": {
+        "name": "Cyprus — Nicosia FIR / Cyprus SRR reference",
+        "country": "Cyprus",
+        "region": "Nicosia",
+        "kind": "FIR-linked SRR reference",
+        "completeness": "FIR outline with interpolated arcs",
+        "geometry_status": "reference_digitalization",
+        "color": "#d576a6",
+        "source_date": "2024-10-03",
+        "notes": "Nicosia FIR vertices transcribed from Cyprus AIP ENR 2.1. Both 45 NM and 46 NM arcs interpolated with spherical geodesic points."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              33.9833333,
+              31.8333333
+            ],
+            [
+              30,
+              33.5
+            ],
+            [
+              30,
+              36.0833333
+            ],
+            [
+              33.55,
+              35.9166667
+            ],
+            [
+              35.6666667,
+              35.9166667
+            ],
+            [
+              35.4833333,
+              35.5833333
+            ],
+            [
+              35.6,
+              35.4166667
+            ],
+            [
+              35.7,
+              35.2666667
+            ],
+            [
+              35.6333333,
+              34.9166667
+            ],
+            [
+              35.7166667,
+              34.6333333
+            ],
+            [
+              35.6,
+              34.55
+            ],
+            [
+              35.5228387,
+              34.5487816
+            ],
+            [
+              35.4464328,
+              34.5488726
+            ],
+            [
+              35.3702941,
+              34.5436368
+            ],
+            [
+              35.2949736,
+              34.5331123
+            ],
+            [
+              35.2210162,
+              34.5173751
+            ],
+            [
+              35.1489558,
+              34.4965391
+            ],
+            [
+              35.0793118,
+              34.4707551
+            ],
+            [
+              35.0125847,
+              34.4402093
+            ],
+            [
+              34.9492525,
+              34.4051221
+            ],
+            [
+              34.8897671,
+              34.3657464
+            ],
+            [
+              34.8345508,
+              34.3223657
+            ],
+            [
+              34.7839935,
+              34.2752918
+            ],
+            [
+              34.7384496,
+              34.2248625
+            ],
+            [
+              34.698236,
+              34.1714389
+            ],
+            [
+              34.6636299,
+              34.115403
+            ],
+            [
+              34.6348665,
+              34.0571546
+            ],
+            [
+              34.6121386,
+              33.9971085
+            ],
+            [
+              34.5955944,
+              33.9356913
+            ],
+            [
+              34.5853379,
+              33.8733384
+            ],
+            [
+              34.5814278,
+              33.810491
+            ],
+            [
+              34.5838776,
+              33.7475926
+            ],
+            [
+              34.5926561,
+              33.6850864
+            ],
+            [
+              34.607688,
+              33.6234116
+            ],
+            [
+              34.6288546,
+              33.5630007
+            ],
+            [
+              34.6559951,
+              33.5042766
+            ],
+            [
+              34.6889082,
+              33.4476492
+            ],
+            [
+              34.7273533,
+              33.3935133
+            ],
+            [
+              34.7710532,
+              33.3422457
+            ],
+            [
+              34.8196952,
+              33.2942022
+            ],
+            [
+              34.8729346,
+              33.2497161
+            ],
+            [
+              34.930396,
+              33.2090952
+            ],
+            [
+              35,
+              33.1833333
+            ],
+            [
+              34.95,
+              33.1
+            ],
+            [
+              34.7166667,
+              33.1
+            ],
+            [
+              34.6166667,
+              33.0833333
+            ],
+            [
+              34.5666667,
+              32.8666667
+            ],
+            [
+              34.55,
+              32.7833333
+            ],
+            [
+              34.55,
+              32.7333333
+            ],
+            [
+              34.5140655,
+              32.716458
+            ],
+            [
+              34.4772202,
+              32.7017269
+            ],
+            [
+              34.4412088,
+              32.6856117
+            ],
+            [
+              34.4061048,
+              32.6681453
+            ],
+            [
+              34.3719795,
+              32.6493638
+            ],
+            [
+              34.3389023,
+              32.6293056
+            ],
+            [
+              34.3069403,
+              32.6080117
+            ],
+            [
+              34.276158,
+              32.5855259
+            ],
+            [
+              34.2466175,
+              32.5618941
+            ],
+            [
+              34.2183782,
+              32.5371646
+            ],
+            [
+              34.1914967,
+              32.5113879
+            ],
+            [
+              34.1660266,
+              32.4846167
+            ],
+            [
+              34.1420185,
+              32.4569056
+            ],
+            [
+              34.1195201,
+              32.428311
+            ],
+            [
+              34.0985755,
+              32.3988911
+            ],
+            [
+              34.0792259,
+              32.3687058
+            ],
+            [
+              34.0615089,
+              32.3378163
+            ],
+            [
+              34.0454588,
+              32.3062854
+            ],
+            [
+              34.0311063,
+              32.2741769
+            ],
+            [
+              34.0184788,
+              32.2415559
+            ],
+            [
+              34.0075997,
+              32.2084883
+            ],
+            [
+              33.9984893,
+              32.1750411
+            ],
+            [
+              33.9911639,
+              32.1412816
+            ],
+            [
+              33.9856363,
+              32.107278
+            ],
+            [
+              33.9819155,
+              32.0730986
+            ],
+            [
+              33.9800072,
+              32.0388124
+            ],
+            [
+              33.979913,
+              32.0044881
+            ],
+            [
+              33.9816312,
+              31.9701947
+            ],
+            [
+              33.9851561,
+              31.9360009
+            ],
+            [
+              33.9904789,
+              31.9019752
+            ],
+            [
+              33.9975868,
+              31.8681856
+            ],
+            [
+              34,
+              31.8333333
+            ],
+            [
+              33.9833333,
+              31.8333333
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "LLLL",
+      "properties": {
+        "name": "Israel — Tel Aviv FIR offshore boundary (partial)",
+        "country": "Israel",
+        "region": "Tel Aviv / JRCC Haifa",
+        "kind": "FIR-linked SRR reference",
+        "completeness": "Partial boundary LINE only; no polygon",
+        "geometry_status": "partial_reference",
+        "color": "#33b3ff",
+        "source_date": "2026-08-06",
+        "notes": "AIP ENR 2.1 offshore western boundary and 46 NM arc digitized; 27 NM coastline-parallel segment represented by straight connection for reference only. Landward border omitted."
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            34.2166667,
+            31.3
+          ],
+          [
+            34,
+            31.8333333
+          ],
+          [
+            33.9977277,
+            31.8675938
+          ],
+          [
+            33.9906987,
+            31.9007821
+          ],
+          [
+            33.9853922,
+            31.9342006
+          ],
+          [
+            33.9818202,
+            31.9677848
+          ],
+          [
+            33.9799915,
+            32.0014699
+          ],
+          [
+            33.9799116,
+            32.0351905
+          ],
+          [
+            33.9815827,
+            32.0688814
+          ],
+          [
+            33.9850033,
+            32.1024774
+          ],
+          [
+            33.9901688,
+            32.1359131
+          ],
+          [
+            33.997071,
+            32.1691236
+          ],
+          [
+            34.0056984,
+            32.2020443
+          ],
+          [
+            34.0160361,
+            32.2346111
+          ],
+          [
+            34.0280658,
+            32.2667604
+          ],
+          [
+            34.0417658,
+            32.2984296
+          ],
+          [
+            34.057111,
+            32.3295567
+          ],
+          [
+            34.0740731,
+            32.3600809
+          ],
+          [
+            34.0926206,
+            32.3899424
+          ],
+          [
+            34.1127186,
+            32.4190827
+          ],
+          [
+            34.1343292,
+            32.4474446
+          ],
+          [
+            34.1574115,
+            32.4749725
+          ],
+          [
+            34.1819213,
+            32.5016121
+          ],
+          [
+            34.2078118,
+            32.5273111
+          ],
+          [
+            34.235033,
+            32.5520188
+          ],
+          [
+            34.2635325,
+            32.5756867
+          ],
+          [
+            34.293255,
+            32.5982679
+          ],
+          [
+            34.3241428,
+            32.619718
+          ],
+          [
+            34.3561356,
+            32.6399944
+          ],
+          [
+            34.389171,
+            32.6590573
+          ],
+          [
+            34.4231843,
+            32.6768687
+          ],
+          [
+            34.4581087,
+            32.6933935
+          ],
+          [
+            34.4938756,
+            32.7085989
+          ],
+          [
+            34.5333333,
+            32.7166667
+          ],
+          [
+            34.5833333,
+            33.1
+          ],
+          [
+            35.1,
+            33.1
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "HECC",
+      "properties": {
+        "name": "Egypt — Cairo FIR northern / eastern maritime boundary (partial)",
+        "country": "Egypt",
+        "region": "Cairo / JRCC Cairo",
+        "kind": "FIR-linked SRR reference",
+        "completeness": "Partial boundary LINE only; no polygon",
+        "geometry_status": "historical_partial_reference",
+        "color": "#eeb54f",
+        "source_date": "2014-05-31",
+        "notes": "From ICAO MID ATM SG/1-WP/7 (2014). Historical proposal/working paper, not verified against current 2026 AIP. Marine northern / eastern boundary shown; landward boundary omitted."
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            24.1666667,
+            34
+          ],
+          [
+            27.1666667,
+            34
+          ],
+          [
+            30,
+            33.5
+          ],
+          [
+            33.9833333,
+            31.8333333
+          ],
+          [
+            34.5,
+            31.6
+          ]
+        ]
+      }
+    }
+  ]
+}
