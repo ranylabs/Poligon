@@ -9,11 +9,28 @@
 | Region | Geometry | Reference | Completeness |
 | --- | --- | --- | --- |
 | Cyprus / Nicosia FIR | Closed polygon, 82 coordinates | Cyprus AIP ENR 2.1, May 2026 | FIR described at minute-level precision. The published 45 NM / 46 NM arcs are approximated geodesically. IMO GMDSS 2024 says certain Cyprus/Türkiye/Greece maritime SRR boundaries remain provisional. |
-| Israel / Tel Aviv FIR | Open line, 52 coordinates | Israel AIP ENR 2.1, effective August 2026 | Offshore west edge and 46 NM BGN arc only. The 27 NM offshore coast-parallel segment **cannot** be reproduced exactly from the published endpoints alone and is schematic. This is **not** a completed Israeli SRR polygon. |
+| Israel / Tel Aviv FIR | Open line, 52 coordinates | Israel AIP ENR 2.1, effective August 2026 | Offshore west edge retains exact published AIP anchors and the 46 NM BGN arc. The 27 NM northern coastline-parallel segment has been reshaped using GSHHG intermediate-resolution shoreline curvature, with the published endpoints fixed. **This is a cartographic reconstruction, not an officially surveyed 27 NM equidistant line or a completed Israeli SRR polygon.** |
 | Egypt / Cairo FIR | Open line, 5 published coordinates | ICAO MID ATM SG/1 WP/7, June 2014 | Historic northern/eastern FIR reference only; not reverified against the active 2026 Egypt AIP. This is **not** a completed Cairo SRR polygon. |
 | Malta / Malta FIR | Closed polygon, 5 vertices | Malta AIP ENR 2.1 / GEN 3.6, June 2026 | Malta AIP states its maritime SAR region coincides with Malta FIR. **FIR geometry reference**, not directly verified against GISIS. |
 | Greece / Athens FIR | Open line, 7 vertices | Greek Hydrographic Annual Notices to Mariners 2025 and AIP references | Partial offshore western/southern boundary; Aegean disagreements and non-coastal sides omitted. |
 | Lebanon / Beirut FIR | Open line, 38 vertices | ICAO MID ATM SG/9 WP5, 2023 | Partial offshore FIR limit with a geodesically interpolated circular arc. Coast-parallel and inland borders omitted; SRR extent not authenticated. |
+
+### Israel improvement methodology (2026-11-22)
+
+The authoritative source, **Israel AIP ENR 2.1 (effective 2026-08-06)**, publishes:
+- Southwest anchor: **31°18′N 034°13′E**, then **31°50′N 034°00′E**.
+- A **46 NM** clockwise geodesic arc centred on **BGN DVOR**, whose source location is published in AIP ENR 4.1 / AD 2 as **32°00′47.2″N 034°52′31.3″E**, ending **32°43′N 034°32′E**.
+- Next a line **27 NM parallel to the coastline** ending **33°06′N 034°35′E**, then **33°06′N 035°06′E**.
+
+The last coastline-parallel section previously appeared as a **single straight segment**, which did not follow coastline curvature. The revised map includes 27 points over this section. These were calculated from the intermediate-resolution **GSHHG shoreline** (via Basemap 2.0) offset seaward in a local azimuthal equidistant projection, then its curvature was smoothly constrained between the two **published AIP endpoint coordinates**. GSHHG coastline data are not themselves official FIR or SAR limits.
+
+**Geometry caveat:** The AIP gives a distance description, not a sequence of intermediate vertices. With the AIP endpoints fixed, measured distances to the generalized coastline are not uniformly 27 NM; the reconstructed segment is not mathematically identical to a true 27 NM shoreline offset. This is more coast-shaped than the former line, but **cannot be described as a fully precise or authority-certified maritime SRR**.
+
+The screenshot from Global SAR Hub was used only to understand the user's visual concern. **No boundaries were copied or extracted from that provider's map**, which prohibits reproduction or extraction without permission.
+
+GSHHG source: [NOAA NCEI Shoreline Database](https://www.ngdc.noaa.gov/mgg/shorelines/shorelines.html); GSHHG is published under LGPL. See the NOAA page for its licence and attribution requirements.
+
+If GISIS or JRCC Haifa provides the current official SRR GML/GeoJSON, **replace the reference line rather than adding undocumented extra vertices**. Poligon already supports GML and GeoJSON import for that purpose.
 
 ### Sources
 
