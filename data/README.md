@@ -146,6 +146,19 @@ Poligon separates **Your Workspace** (saved results) from **Map Tools** (actions
 - Deletion requires confirmation. No change to existing project JSON/localStorage formats, and all previously saved measurements/objects remain compatible.
 - Tool actions are visually separated below **MAP TOOLS**, and creation/saving buttons receive primary styles.
 
+### Geometry selection directly below coordinates
+
+The Coordinate editor now chooses geometry **at the final save action** rather than via a separate dropdown in Object settings:
+
+- **1 valid coordinate:** one **Save Point** action.
+- **2 valid coordinates:** one **Save Route** action.
+- **3 or more valid coordinates:** two explicit adjacent actions, **Plot Polygon** (closed area) and **Plot Route** (open polyline).
+- If a coordinate row is partially filled or invalid, the save options are hidden until the row is corrected or removed.
+- When editing a saved geometry, actions change to **Update as Polygon** and **Update as Route**, with the current geometry highlighted. Saved entities continue using the same JSON format and localStorage key.
+- After detection, the editor expands automatically. After successful save, Your Workspace expands and the map shows a brief confirmation.
+
+The old geometry-type dropdown in Object settings was removed to eliminate duplicate, conflicting choices. No polygon is silently selected for 3+ coordinates.
+
 ## Layer UX and persistence
 
 - Reference layer colors are stored per feature in the **current browser** under `poligon-srr-colors-v2`. They can be changed independently from operator-created objects.
