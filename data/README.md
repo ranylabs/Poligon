@@ -159,6 +159,25 @@ The Coordinate editor now chooses geometry **at the final save action** rather t
 
 The old geometry-type dropdown in Object settings was removed to eliminate duplicate, conflicting choices. No polygon is silently selected for 3+ coordinates.
 
+## Right-click map quick actions (November 2026)
+
+Right-click anywhere on the Leaflet map, including a saved polygon/route/point or a reference layer, to open a compact, mouse-positioned **MAP ACTIONS** menu:
+
+- **Measure from here** — starts a distance measurement and records the clicked position as the first waypoint. When measuring is already in progress, the command adds the clicked position as the next waypoint.
+- **Add coordinate to editor** — inserts the clicked coordinate as a new row, opens the Coordinate Editor accordion, and leaves operator-saved geometry unchanged until an explicit save.
+- **Marine weather here** — opens a dark **Windy-style popup anchored to the selected map coordinate**. It loads Open-Meteo Weather (10 m wind speed/direction/gusts) and Marine (significant wave height/direction/period and ocean-current speed/direction), showing model data for the selected UTC hour. Previous/next hour, Refresh and Details are supported. Source attribution and a nearshore-current warning are displayed.
+- **Copy coordinates** — copies the DDM WGS84 pair to the clipboard, with manual copy fallback if clipboard permissions are unavailable.
+
+When a right-click occurs within 10 screen pixels of an **existing visible user geometry vertex**, it snaps exactly to the saved vertex coordinate; otherwise the geographic clicked point is used.
+
+When **Measure** mode is already active, the same menu also shows **Finish & Save, Undo Last Point, Cancel Measurement** at the top. Other actions remain available without silently ending the in-progress measurement.
+
+The popup uses the existing Leaflet map, so it stays anchored correctly while the map pans/zooms. No public API keys are embedded. For the short-form widget, weather and marine HTTP requests run independently; if one service fails but the other succeeds, the available model values remain visible.
+
+**Units / conventions:** Wind speed is in **knots**; wind direction is **FROM**. Significant wave height (Hs) is in **metres**; wave direction **FROM**, wave period **seconds**. Ocean-current direction **TO**; marine model current speed is converted to knots from the unit reported by the API. Invalid or missing values display as unavailable rather than fabricated zeros.
+
+**Safety / licensing:** Open-Meteo model forecasts are *not observations*; the marine current forecast has limited coastal precision. The free API plan may not cover production/commercial/ongoing organizational use; provider terms, credits, and request limits must be checked before operational deployment. The popup is a planning aid only, not for navigation or sole-source SAR coordination.
+
 ## Layer UX and persistence
 
 - Reference layer colors are stored per feature in the **current browser** under `poligon-srr-colors-v2`. They can be changed independently from operator-created objects.
