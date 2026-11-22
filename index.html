@@ -9,7 +9,106 @@
 #measureContextMenu button:hover:not(:disabled){background:#2d5d7a}
 #measureContextMenu button.danger{background:#69393b}
 @media(max-width:750px){#measureHud{right:6px;bottom:8px;min-width:190px;padding:8px;font-size:11px}#measureHud .metric{font-size:15px}}
-</style></head><body><div id="app"><aside><h2>POLIGON · Marine Mapper</h2><div class="muted">Prototype for planning, not for navigation</div><section><h3>1 · Object</h3><input id="name" placeholder="Object name" style="width:100%"><div class="row"><label>Color <input id="color" type="color" value="#2da6e9"></label><label>Buffer NM <input id="buffer" type="number" min="0" step=".1" value="0" style="width:70px"></label></div><select id="shape" style="width:100%"><option value="auto">Automatic: polygon for 3+ points</option><option value="route">Route / open line</option><option value="polygon">Polygon / closed area</option></select></section><section><h3>2 · Paste coordinates</h3><textarea id="paste" placeholder="A. 31°51.3′N 034°39.3′E&#10;B. 31°52.2′N 034°38.5′E"></textarea><button onclick="detect()">Detect</button><span id="detected" class="muted"></span></section><section><h3>3 · Edit points</h3><div id="points"></div><button onclick="addPoint()">+ Point</button><button id="addbtn" onclick="toggleMode('add')">+ From map</button><button onclick="plot()">Plot / Save</button><button onclick="resetEditor()">Clear editor</button></section><section><h3>4 · Objects</h3><div id="objectList"></div></section><section><h3>5 · Distance measurement — NM / True bearing</h3><p class="muted">Click map, lines or existing points. Move mouse to see live leg distance, total distance and initial true bearing (°T). Right-click the map for Finish / Undo / Cancel. Keyboard: Enter, Backspace, Esc.</p><button id="measurebtn" onclick="toggleMode('measure')">Measure</button><button onclick="finishMeasure()">Finish</button><button onclick="toggleMode('')">Cancel</button><div id="measureInfo" class="muted"></div><div id="measureList"></div></section><section><h3>6 · Marine weather</h3><p class="muted">Open-Meteo model forecasts. Requires internet. Not observations.</p><button id="weatherbtn" onclick="toggleMode('weather')">Pick weather point</button><label>UTC hour <input type="datetime-local" id="hour"></label><button onclick="weather()">Refresh</button><div id="weatherData" class="muted">Select a position.</div></section><section><h3>7 · Project</h3><button onclick="exportKML()">Export KML</button><button onclick="exportJSON()">Save JSON</button><button onclick="document.getElementById('load').click()">Load JSON</button><input type="file" id="load" accept=".json" hidden onchange="importJSON(event)"><button onclick="fitAll()">Fit all</button><button onclick="deleteAll()">Delete all objects</button><p class="muted">Auto-saved on this browser only.</p></section><section><h3>8 · Search & Rescue Regions — source reference</h3>
+
+/* Poligon design system: saved entities and creation tools use separate visual hierarchies */
+:root{color-scheme:dark;--page:#081723;--panel:#102739;--panel-alt:#152c3f;--hair:#264152;--text:#e8f3fa;--muted:#94afc0;--cyan:#40cae8;--cyan-deep:#087aa0;--amber:#ffbf5a;--danger:#fd818d}
+body{background:var(--page);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.01em}
+#app{height:100dvh}
+aside{width:420px;min-width:340px;flex-shrink:0;background:linear-gradient(180deg,#0c202f,#102333 60%,#0c1d2a);padding:0 13px 20px;border-right:1px solid #355064;scrollbar-color:#466276 transparent;scrollbar-width:thin}
+#map{min-width:0}
+.app-brand{position:sticky;top:0;z-index:1200;display:flex;align-items:center;gap:12px;padding:18px 12px 16px;margin:0 -13px 14px;background:linear-gradient(135deg,#0d2536ee,#112a3bef);backdrop-filter:blur(18px);border-bottom:1px solid #284858;box-shadow:0 8px 18px #06121d55}
+.brand-logo{width:45px;height:45px;flex:none;border-radius:12px;background:linear-gradient(145deg,#1ee2de,#1475bd);display:grid;place-items:center;color:#002637;font-size:29px;font-weight:900;box-shadow:0 6px 19px #19abc43f}
+.brand-logo span{color:white;font-size:18px;transform:translate(-3px,-10px)}
+.brand-copy{flex:1;min-width:0}.brand-eyebrow{font-size:9px;font-weight:800;letter-spacing:.18em;color:#69b9d2;margin-bottom:2px}
+.brand-title{font-size:19px;letter-spacing:.035em;font-weight:800}.brand-title span{font-weight:400;color:#bad1e0}
+.brand-subtitle{font-size:10.5px;color:#a0b6c7;margin-top:2px}.brand-version{align-self:flex-start;background:#113344;color:#85d9df;border:1px solid #276279;border-radius:4px;font-size:9px;letter-spacing:.08em;font-weight:700;padding:3px 5px}
+section{background:#142b3c;border:1px solid #2a485a;border-radius:11px;box-shadow:0 3px 13px #06132024;padding:14px;margin:12px 0}
+section h3{font-size:13px;letter-spacing:.01em;font-weight:750;line-height:1.5;margin:0 0 12px;color:#e5f4fb}
+section .muted,.tool-hint{color:var(--muted);line-height:1.55}
+.tool-divider{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:15px 4px 4px;border-top:1px solid #2c4758;margin-top:18px;color:#9bbbc9;font-size:10px;letter-spacing:.18em;font-weight:800}
+.tool-divider small{font-size:9px;font-weight:600;letter-spacing:.06em;color:#65889c}
+.tool-panel{background:linear-gradient(180deg,#172e41,#142739);border-color:#284658;box-shadow:none}
+.tool-panel:focus-within{border-color:#3986a0}
+.tool-panel button{margin:4px 3px 3px 0;background:#24465e;border:1px solid #395f76;color:#cce6f2;font-size:12px;font-weight:650;transition:background .14s,border-color .14s;min-height:34px}
+.tool-panel button:hover:not(:disabled){background:#305c76;border-color:#5e9cb8}
+.tool-panel button.primary-action{background:linear-gradient(110deg,#13b6d3,#1885cb);border-color:#39c4df;color:#05232f;font-weight:850;box-shadow:0 3px 13px #00a4dd2c}
+.tool-panel button.primary-action:hover{background:linear-gradient(110deg,#45d5e7,#3ea8e9)}
+.tool-panel button.amber-action{background:linear-gradient(105deg,#ffbf5a,#d99831);border-color:#ffd88b;color:#35200d;box-shadow:0 3px 13px #da943026}
+.tool-panel button.amber-action:hover{background:#ffd177}
+.tool-panel button.quiet-action{background:transparent;color:#a8c0d0;border:1px solid #416174}
+.tool-panel button.secondary-action{background:#2b566c;border-color:#53879a}
+.tool-panel button.active{background:#a8662a;color:white}
+.tool-index{display:inline-flex;justify-content:center;align-items:center;min-width:25px;height:25px;border-radius:6px;background:#0f4153;color:#71dceb;font-size:10px;margin-right:7px;font-weight:900;letter-spacing:0}
+.tool-panel input:not([type=color]):focus,.tool-panel select:focus,.tool-panel textarea:focus{outline:2px solid #39b6dd;outline-offset:1px}
+.tool-panel input:not([type=color]),.tool-panel select,.tool-panel textarea{font-size:12px;background:#0e2130;border-color:#3d6377}
+.tool-panel textarea{min-height:100px;resize:vertical}
+.tool-panel label{font-size:12px}
+.tool-hint{border-top:1px solid #314758;margin:11px 0 0;padding-top:8px;font-size:11px}
+.workspace-panel{border:1px solid #2f6c78;background:linear-gradient(165deg,#123440,#102534 47%,#10202d);box-shadow:0 5px 21px #0004;padding:14px 12px 13px;position:relative}
+.workspace-panel::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,#30d9df,#299aca,#d5a24f);border-radius:11px 11px 0 0}
+.workspace-kicker{display:flex;align-items:center;gap:7px;font-weight:850;letter-spacing:.14em;font-size:9.5px;color:#81dce8}
+.workspace-kicker-dot{height:7px;width:7px;flex:none;border-radius:50%;background:#40dac5;box-shadow:0 0 10px #40dac5}
+.workspace-local{margin-left:auto;font-size:9px;letter-spacing:.07em;padding:4px 6px;border:1px solid #356773;border-radius:4px;color:#83b6c3;font-weight:650}
+.workspace-heading{display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:6px}
+.workspace-heading h3{font-size:17px;margin:0;font-weight:800}
+.workspace-counter{font-size:11px;font-weight:700;padding:4px 7px;border-radius:20px;background:#235665;color:#b5f1f4;white-space:nowrap}
+.workspace-caption{font-size:11px;line-height:1.5;color:#a7c2cf;margin:9px 0 15px}
+.workspace-group{border-top:1px solid #325260;padding-top:12px;margin-top:10px}
+.workspace-group-heading{display:flex;align-items:center;gap:8px;margin-bottom:9px;color:#c8e0e9;font-size:10px;font-weight:850;letter-spacing:.10em}
+.workspace-group-icon{height:24px;width:24px;border-radius:7px;display:grid;place-items:center;font-size:18px;letter-spacing:0;font-weight:400}
+.object-icon{color:#42c9e4;background:#0a5265}.measure-icon{color:#ffd082;background:#4a3626}
+.workspace-group-count{margin-left:auto;background:#2a4759;color:#dbedf4;border-radius:20px;min-width:23px;text-align:center;padding:3px 5px}
+#objectList,#measureList{display:flex;flex-direction:column;gap:8px;max-height:340px;overflow:auto;scrollbar-width:thin;scrollbar-color:#547584 transparent}
+.workspace-empty{border:1px dashed #42616d;background:#102632;border-radius:9px;display:flex;align-items:center;gap:8px;padding:12px;color:#829eae;font-size:11.5px;line-height:1.5}
+.workspace-empty .empty-icon{font-size:20px;color:#668d9f}
+.saved-card{--entity-accent:#49bbe4;position:relative;background:#0b2130;border:1px solid #345465;border-radius:10px;overflow:hidden;box-shadow:0 3px 10px #07152250;transition:background .15s,border-color .15s}
+.saved-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--entity-accent)}
+.saved-card:hover{border-color:#51829a;background:#102a39}
+.saved-card-main{display:flex;align-items:flex-start;gap:9px;padding:10px 11px 9px 13px}
+.saved-card-symbol{height:32px;width:32px;flex:none;display:grid;place-items:center;background:color-mix(in srgb,var(--entity-accent) 19%,transparent);border-radius:8px;color:var(--entity-accent);font-size:21px;font-weight:700}
+.saved-card-body{flex:1;min-width:0}
+.saved-card-name{font-size:13px;font-weight:780;line-height:1.35;overflow-wrap:anywhere;color:#f1f8fc}
+.saved-card-meta{color:#9bb6c4;font-size:11px;line-height:1.5;margin-top:4px}
+.saved-card-type{border:1px solid color-mix(in srgb,var(--entity-accent) 35%,#233847);font-size:9px;font-weight:800;letter-spacing:.06em;padding:4px 5px;border-radius:5px;color:var(--entity-accent);white-space:nowrap}
+.saved-card-controls{display:flex;align-items:center;gap:5px;flex-wrap:wrap;background:#132f3c;border-top:1px solid #2a4654;padding:6px 8px 6px 12px}
+.saved-card-controls button{display:inline-flex;align-items:center;gap:4px;margin:0;min-height:28px;font-size:10px;font-weight:700;color:#bed6e2;background:transparent;border:1px solid transparent;border-radius:5px;padding:5px 6px;transition:background .12s,border-color .12s}
+.saved-card-controls button:hover{border-color:#466e80;background:#225066;color:#f1f9ff}
+.saved-card-controls button.card-danger{margin-left:auto;color:#eea2aa}
+.saved-card-controls button.card-danger:hover{color:#fff;background:#793c46;border-color:#b36b71}
+.saved-card.hidden-object{opacity:.64}
+.saved-card.hidden-object .saved-card-type{color:#a6aebc}
+.saved-card-measure{--entity-accent:#ffc46f;background:linear-gradient(120deg,#302719,#17232e 80%);border-color:#6d5737}
+.saved-card-measure .saved-card-controls{background:#2a2a2c;border-color:#605038}
+.saved-card-measure .saved-card-symbol{font-size:23px}
+.saved-card.measure-highlight{animation:savedPulse .55s ease-out}
+@keyframes savedPulse{0%{box-shadow:0 0 0 3px #ffdc89bb}100%{box-shadow:0 3px 10px #07152250}}
+#measureHud{bottom:27px}
+#hud{left:435px;bottom:27px;background:#071c2ce8;border:1px solid #436072;border-radius:7px;box-shadow:0 2px 10px #06132044;padding:10px}
+#map::after{content:"";position:absolute;pointer-events:none;inset:0;border-left:1px solid #668b9b30}
+#mapProjectSummary{position:absolute;top:12px;left:60px;z-index:950;background:#0e2632dc;border:1px solid #4d6c74;border-radius:7px;padding:7px 11px;color:#cde5eb;font-size:11px;font-weight:700;pointer-events:none;backdrop-filter:blur(8px);box-shadow:0 3px 10px #07162433}
+#mapProjectSummary strong{color:#7cdfec}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #5fe2ef;outline-offset:2px}
+@media(max-width:900px){aside{width:365px;min-width:330px}#hud{left:380px}}
+@media(max-width:750px){#app{height:100dvh;flex-direction:column}aside{width:100%;height:54vh;min-width:0;flex:none}#map{height:46vh;flex:1}#hud{left:9px;bottom:10px;max-width:calc(100% - 18px);font-size:10px}#mapProjectSummary{top:8px;left:49px;max-width:65%}.app-brand{top:0}}
+</style></head><body><div id="app"><aside aria-label="Poligon controls"><div class="app-brand">
+  <div class="brand-logo" aria-hidden="true">P<span>·</span></div>
+  <div class="brand-copy"><div class="brand-eyebrow">MARITIME OPERATIONS</div><div class="brand-title">POLIGON <span>Mapper</span></div><div class="brand-subtitle">Geospatial planning workspace</div></div>
+  <span class="brand-version">BETA</span>
+</div>
+<section id="workspace" class="workspace-panel" aria-labelledby="workspaceTitle">
+  <div class="workspace-kicker"><span class="workspace-kicker-dot"></span> YOUR WORKSPACE <span class="workspace-local">LOCAL SAVE</span></div>
+  <div class="workspace-heading"><h3 id="workspaceTitle">Saved on this device</h3><span id="workspaceCounter" class="workspace-counter">0 saved</span></div>
+  <p class="workspace-caption">These are your saved results — not creation tools. Select an action on each card to manage it.</p>
+  <div class="workspace-group">
+    <div class="workspace-group-heading"><span class="workspace-group-icon object-icon">⬡</span><span>PLOTTED OBJECTS</span><span id="objectCount" class="workspace-group-count">0</span></div>
+    <div id="objectList" aria-label="Saved map objects"></div>
+  </div>
+  <div class="workspace-group">
+    <div class="workspace-group-heading"><span class="workspace-group-icon measure-icon">⌁</span><span>SAVED MEASUREMENTS</span><span id="measureCount" class="workspace-group-count">0</span></div>
+    <div id="measureList" aria-label="Saved distance measurements"></div>
+  </div>
+</section>
+<div class="tool-divider"><span>MAP TOOLS</span><small>CREATE · MEASURE · ANALYSE</small></div><section class="tool-panel"><h3><span class="tool-index">01</span> Object settings</h3><input id="name" placeholder="Object name" style="width:100%"><div class="row"><label>Color <input id="color" type="color" value="#2da6e9"></label><label>Buffer NM <input id="buffer" type="number" min="0" step=".1" value="0" style="width:70px"></label></div><select id="shape" style="width:100%"><option value="auto">Automatic: polygon for 3+ points</option><option value="route">Route / open line</option><option value="polygon">Polygon / closed area</option></select></section><section class="tool-panel"><h3><span class="tool-index">02</span> Paste coordinates</h3><textarea id="paste" placeholder="A. 31°51.3′N 034°39.3′E&#10;B. 31°52.2′N 034°38.5′E"></textarea><button onclick="detect()">Detect</button><span id="detected" class="muted"></span></section><section class="tool-panel"><h3><span class="tool-index">03</span> Coordinate editor</h3><div id="points"></div><button onclick="addPoint()">+ Point</button><button id="addbtn" onclick="toggleMode('add')">+ From map</button><button class="primary-action" onclick="plot()">⬡ &nbsp;Plot & Save object</button><button onclick="resetEditor()">Clear editor</button></section><section class="tool-panel measure-tool"><h3><span class="tool-index">04</span> Measure distance · NM / °T</h3><p class="muted">Click map, lines or existing points. Move mouse to see live leg distance, total distance and initial true bearing (°T). Right-click the map for Finish / Undo / Cancel. Keyboard: Enter, Backspace, Esc.</p><button class="primary-action amber-action" id="measurebtn" onclick="toggleMode('measure')">⌁ &nbsp;Start measuring</button><button class="secondary-action" onclick="finishMeasure()">Finish & save</button><button class="quiet-action" onclick="cancelMeasure()">Cancel</button><div id="measureInfo" class="muted" aria-live="polite"></div><p class="tool-hint">Finished measurements appear above under <b>Saved measurements</b> with an amber label.</p></section><section class="tool-panel"><h3><span class="tool-index">05</span> Marine weather</h3><p class="muted">Open-Meteo model forecasts. Requires internet. Not observations.</p><button id="weatherbtn" onclick="toggleMode('weather')">Pick weather point</button><label>UTC hour <input type="datetime-local" id="hour"></label><button onclick="weather()">Refresh</button><div id="weatherData" class="muted">Select a position.</div></section><section class="tool-panel"><h3><span class="tool-index">06</span> Project files</h3><button onclick="exportKML()">Export KML</button><button onclick="exportJSON()">Save JSON</button><button onclick="document.getElementById('load').click()">Load JSON</button><input type="file" id="load" accept=".json" hidden onchange="importJSON(event)"><button onclick="fitAll()">Fit all</button><button onclick="deleteAll()">Delete all objects</button><p class="muted">Auto-saved on this browser only.</p></section><section class="tool-panel"><h3><span class="tool-index">07</span> Search & Rescue Regions</h3>
 <p class="muted">Only GISIS/authority-approved GML or GeoJSON should be used for operational responsibility. Regional source boundaries shown here are AIP/FIR references; Cairo 2014 is historical. Provisional Cyprus–Türkiye–Greece boundaries are disputed.</p>
 <label><input type="checkbox" id="srrToggle" checked onchange="toggleSrrReference(this.checked)"> Show selected Mediterranean boundaries (reference)</label>
 <p class="muted">Choose each country separately. Israel is selected by default; Cyprus and Egypt can be shown independently, even where references overlap.</p><div id="srrColorControls" style="margin-top:7px" class="muted">Enable regional layer to choose individual countries and edit colors.</div>
@@ -44,7 +143,7 @@
 <div id="importedSrrColors" class="muted"></div>
 <p class="muted"><a style="color:#91d9ff" href="https://www.imo.org/en/ourwork/safety/pages/globalsarplan.aspx" target="_blank" rel="noopener">IMO GISIS Global SAR Plan — authoritative verification</a></p>
 <div id="srrStatus" class="muted">Regional layer off. Line colors are stored in this browser.</div>
-<div id="globalSrrStatus" class="muted"></div></section></aside><div id="map"><div id="measureHud"></div><div id="measureContextMenu" role="menu" aria-label="Measurement actions"><div class="menu-title">MEASUREMENT ACTIONS</div><button id="measureMenuFinish" onclick="finishMeasure()">Finish &amp; save · Enter</button><button id="measureMenuUndo" onclick="undoMeasurePoint()">Undo last point · Backspace</button><button class="danger" onclick="cancelMeasure()">Cancel measurement · Esc</button></div></div></div><div id="hud">Move mouse over map</div><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script><script>
+<div id="globalSrrStatus" class="muted"></div></section></aside><div id="map"><div id="mapProjectSummary" aria-live="polite"><strong>0</strong> objects &nbsp;·&nbsp; <strong>0</strong> measurements saved</div><div id="measureHud"></div><div id="measureContextMenu" role="menu" aria-label="Measurement actions"><div class="menu-title">MEASUREMENT ACTIONS</div><button id="measureMenuFinish" onclick="finishMeasure()">Finish &amp; save · Enter</button><button id="measureMenuUndo" onclick="undoMeasurePoint()">Undo last point · Backspace</button><button class="danger" onclick="cancelMeasure()">Cancel measurement · Esc</button></div></div></div><div id="hud">Move mouse over map</div><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script><script>
 const $=id=>document.getElementById(id),KEY='poligon-v1',map=L.map('map').setView([32.5,34.5],8),group=L.layerGroup().addTo(map);
 const tiles=(name,z)=>L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/'+name+'/MapServer/tile/{z}/{y}/{x}',{maxZoom:z,attribution:'Tiles © Esri'});
 const street=tiles('World_Street_Map',19).addTo(map),ocean=tiles('Ocean/World_Ocean_Base',16),topo=tiles('World_Topo_Map',19),sat=tiles('World_Imagery',19),seamarks=L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png',{attribution:'© OpenSeaMap',maxZoom:18}).addTo(map);
@@ -121,7 +220,79 @@ function draw(){
   });
   lists();
 }
-function lists(){$('objectList').innerHTML='';objects.forEach((o,i)=>{let d=document.createElement('div');d.className='item';d.style.borderColor=o.color;d.innerHTML='<b>'+clean(o.name)+'</b><div class="muted">'+o.type+' · '+o.points.length+' points · Buffer '+o.buffer+' NM</div>';[['Hide/Show',()=>{o.visible=!o.visible;save();draw()}],['Edit',()=>{editing=i;$('name').value=o.name;$('color').value=o.color;$('buffer').value=o.buffer;$('shape').value=o.type==='Route'?'route':'polygon';$('points').innerHTML='';o.points.forEach(p=>addPoint(ddm(p[0],'lat'),ddm(p[1],'lon')))}],['Zoom',()=>zoom(o.points)],['Delete',()=>{objects.splice(i,1);save();draw()}]].forEach(([t,f])=>{let b=document.createElement('button');b.textContent=t;b.onclick=f;d.appendChild(b)});$('objectList').appendChild(d)});$('measureList').innerHTML='';measures.forEach((m,i)=>{let d=document.createElement('div');d.className='item';d.textContent=m.name+' · '+total(m.points).toFixed(2)+' NM ';[['Hide/Show',()=>{m.visible=!m.visible;save();draw()}],['Zoom',()=>zoom(m.points)],['Delete',()=>{measures.splice(i,1);save();draw()}]].forEach(([t,f])=>{let b=document.createElement('button');b.textContent=t;b.onclick=f;d.appendChild(b)});$('measureList').appendChild(d)})}
+function workspaceButton(label,action,opts={}){
+ const btn=document.createElement('button');
+ btn.type='button';btn.textContent=label;
+ if(opts.title)btn.title=opts.title;
+ if(opts.danger)btn.className='card-danger';
+ btn.addEventListener('click',ev=>{ev.stopPropagation();action()});
+ return btn;
+}
+function createSavedCard({name,type,detail,accent,symbol,hidden=false,measure=false},actions){
+ const card=document.createElement('article');
+ card.className='saved-card'+(measure?' saved-card-measure':'')+(hidden?' hidden-object':'');
+ card.style.setProperty('--entity-accent',accent||'#4dc3df');
+ const main=document.createElement('div');main.className='saved-card-main';
+ const icon=document.createElement('div');icon.className='saved-card-symbol';icon.textContent=symbol||'◇';
+ const content=document.createElement('div');content.className='saved-card-body';
+ const title=document.createElement('div');title.className='saved-card-name';title.textContent=name;
+ const meta=document.createElement('div');meta.className='saved-card-meta';meta.textContent=detail;
+ content.append(title,meta);
+ const badge=document.createElement('span');badge.className='saved-card-type';badge.textContent=hidden?'HIDDEN':type.toUpperCase();
+ main.append(icon,content,badge);
+ const toolbar=document.createElement('div');toolbar.className='saved-card-controls';toolbar.setAttribute('aria-label','Actions for '+name);
+ for(const action of actions){
+  toolbar.appendChild(workspaceButton(action.label,action.click,{danger:action.danger,title:action.title}));
+ }
+ card.append(main,toolbar);
+ return card;
+}
+function updateWorkspaceTotals(){
+ const n=objects.length,m=measures.length;
+ $('workspaceCounter').textContent=(n+m)+' saved';
+ $('objectCount').textContent=n;
+ $('measureCount').textContent=m;
+ if($('mapProjectSummary'))$('mapProjectSummary').innerHTML='<strong>'+n+'</strong> objects &nbsp;·&nbsp; <strong>'+m+'</strong> measurements saved';
+}
+function lists(){
+ const objectHost=$('objectList'),measureHost=$('measureList');
+ objectHost.replaceChildren();measureHost.replaceChildren();
+ objects.forEach((o,i)=>{
+  const kind=o.type==='Point'?'Point':o.type==='Route'?'Route':'Polygon';
+  const glyph=kind==='Point'?'●':kind==='Route'?'⌁':'⬡';
+  const meta=[o.points.length+' point'+(o.points.length===1?'':'s'),o.buffer>0?'Buffer '+o.buffer+' NM':null,o.type==='Route'?total(o.points).toFixed(2)+' NM route':null,!o.visible?'Currently hidden':null].filter(Boolean).join(' · ');
+  const actions=[
+   {label:'⌕ Focus',click:()=>zoom(o.points),title:'Zoom the map to this saved object'},
+   {label:'✎ Edit',click:()=>{
+      editing=i;$('name').value=o.name;$('color').value=o.color;$('buffer').value=o.buffer;
+      $('shape').value=o.type==='Route'?'route':'polygon';$('points').replaceChildren();
+      o.points.forEach(p=>addPoint(ddm(p[0],'lat'),ddm(p[1],'lon')));
+      $('name').focus();
+      $('name').scrollIntoView({behavior:'smooth',block:'center'});
+   }},
+   {label:o.visible?'◉ Hide':'◌ Show',click:()=>{o.visible=!o.visible;save();draw()}},
+   {label:'× Delete',danger:true,click:()=>{if(!confirm('Delete saved object "'+o.name+'"?'))return;objects.splice(i,1);save();draw()}}
+  ];
+  objectHost.appendChild(createSavedCard({name:o.name||kind,type:kind,detail:meta,accent:/^#[\da-f]{6}$/i.test(o.color)?o.color:'#3ebfe7',symbol:glyph,hidden:o.visible===false},actions));
+ });
+ if(!objects.length){
+  objectHost.innerHTML='<div class="workspace-empty"><span class="empty-icon">⬡</span><span>No saved objects yet. Create a point, route or polygon below.</span></div>';
+ }
+ measures.forEach((m,i)=>{
+  const meta=[m.points.length+' waypoints',total(m.points).toFixed(2)+' NM total',m.visible===false?'Currently hidden':null].filter(Boolean).join(' · ');
+  const actions=[
+   {label:'⌕ Focus',click:()=>zoom(m.points)},
+   {label:'✎ Rename',click:()=>{const name=prompt('Measurement name:',m.name);if(name===null)return;const trimmed=name.trim();if(trimmed){m.name=trimmed.slice(0,100);save();draw()}}},
+   {label:m.visible===false?'◌ Show':'◉ Hide',click:()=>{m.visible=!m.visible;save();draw()}},
+   {label:'× Delete',danger:true,click:()=>{if(!confirm('Delete saved measurement "'+m.name+'"?'))return;measures.splice(i,1);save();draw()}}
+  ];
+  measureHost.appendChild(createSavedCard({name:m.name||'Measurement',type:'MEASUREMENT',detail:meta,accent:'#ffc46f',symbol:'⌁',hidden:m.visible===false,measure:true},actions));
+ });
+ if(!measures.length){
+  measureHost.innerHTML='<div class="workspace-empty"><span class="empty-icon">⌁</span><span>No saved measurements yet. Use the Measure tool below, then Finish & Save.</span></div>';
+ }
+ updateWorkspaceTotals();
+}
 function zoom(p){if(p.length===1)map.setView(p[0],13);else map.fitBounds(L.latLngBounds(p),{padding:[40,40]})}function fitAll(){let p=[...objects.flatMap(o=>o.points),...measures.flatMap(m=>m.points)];if(p.length)zoom(p)}
 let activeMeasureMarkers=[];
 function closeMeasureMenu(){
