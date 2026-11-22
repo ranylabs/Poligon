@@ -4,13 +4,16 @@
 
 ## Eastern Mediterranean bundled GeoJSON
 
-`srr-eastmed-reference.geojson` contains three source-attributed geometries in WGS84 / GeoJSON **longitude, latitude** coordinate order.
+`srr-eastmed-reference.geojson` contains **six** source-attributed geometries in WGS84 / GeoJSON **longitude, latitude** coordinate order. Unless otherwise stated, these are FIR-linked references, not operationally verified maritime SRR polygons.
 
 | Region | Geometry | Reference | Completeness |
 | --- | --- | --- | --- |
 | Cyprus / Nicosia FIR | Closed polygon, 82 coordinates | Cyprus AIP ENR 2.1, May 2026 | FIR described at minute-level precision. The published 45 NM / 46 NM arcs are approximated geodesically. IMO GMDSS 2024 says certain Cyprus/Türkiye/Greece maritime SRR boundaries remain provisional. |
 | Israel / Tel Aviv FIR | Open line, 52 coordinates | Israel AIP ENR 2.1, effective August 2026 | Offshore west edge and 46 NM BGN arc only. The 27 NM offshore coast-parallel segment **cannot** be reproduced exactly from the published endpoints alone and is schematic. This is **not** a completed Israeli SRR polygon. |
 | Egypt / Cairo FIR | Open line, 5 published coordinates | ICAO MID ATM SG/1 WP/7, June 2014 | Historic northern/eastern FIR reference only; not reverified against the active 2026 Egypt AIP. This is **not** a completed Cairo SRR polygon. |
+| Malta / Malta FIR | Closed polygon, 5 vertices | Malta AIP ENR 2.1 / GEN 3.6, June 2026 | Malta AIP states its maritime SAR region coincides with Malta FIR. **FIR geometry reference**, not directly verified against GISIS. |
+| Greece / Athens FIR | Open line, 7 vertices | Greek Hydrographic Annual Notices to Mariners 2025 and AIP references | Partial offshore western/southern boundary; Aegean disagreements and non-coastal sides omitted. |
+| Lebanon / Beirut FIR | Open line, 38 vertices | ICAO MID ATM SG/9 WP5, 2023 | Partial offshore FIR limit with a geodesically interpolated circular arc. Coast-parallel and inland borders omitted; SRR extent not authenticated. |
 
 ### Sources
 
@@ -18,6 +21,11 @@
 - [Israel AIP GEN 3.6 — SAR service responsible within Tel Aviv FIR](https://e-aip.azurefd.net/2026-08-06-AIRAC/html/eAIP/LL-GEN-3.6-en-GB.html)
 - [Cyprus AIP AIRAC AMDT 002/26 — ENR 2.1](https://www.mcw.gov.cy/mcw/dca/ais/ais.nsf/All/455773618044F4C9C2257C7E00234503/$file/LC_Amdt_A_2026_002_en.pdf)
 - [ICAO MID ATM SG/1-WP/7 — Cairo FIR, 2014](https://www.icao.int/MID/Documents/2014/ATM%20SG1/WP%207.pdf)
+- [Malta AIP 2026 — FIR + coincident SAR responsibility](https://www.transport.gov.mt/LM_AIP_2026_83_EFF_11_JUN_2026-2.pdf-f11582)
+- [Greek Hydrographic Service Annual NtM 2025](https://hnhs.gr/wp-content/uploads/2024/12/2025_AnnualNM_EN.pdf)
+- [ICAO MID ATM SG/9-WP5 — Beirut FIR geometry (2023)](https://www.icao.int/MID/Documents/2023/ATM%20SG9/WP5.pdf)
+- [France Shom — official SAR polygons (Open Licence 2.0, original edition 2019)](https://www.data.gouv.fr/datasets/zones-de-recherches-et-secours-sar)
+- [Italy — national maritime SAR plan (2020)](https://www.mit.gov.it/sites/default/files/media/normativa/2021-03/PIANO%20SAR%20MARITTIMO%20NAZIONALE%20Ed.%202020_rev.pdf)
 - [IMO Global SAR Plan (GISIS)](https://www.imo.org/en/ourwork/safety/pages/globalsarplan.aspx)
 - [IMO documents relevant to SAR](https://www.imo.org/en/ourwork/safety/pages/imo-documents-relevant-to-sar.aspx)
 
@@ -45,6 +53,14 @@ The website also imports GML files from the IMO's Global SAR Plan system or othe
 - If two input files share the same internal Area Number, unique in-session imported IDs prevent color overrides from colliding.
 - Use **Export imported GeoJSON** to convert and retain the layer; this does not verify its authority.
 - A free read-only IMO web account may be needed to access GISIS. Do not assume that a bulk global export is offered.
+
+## Interactive measuring
+
+- **Measure** works on open map, user-defined points, polylines, polygons, buffers and reference lines.
+- Move the pointer to see the **live distance of the next leg**, **true initial bearing (°T)** and **accumulated NM**.
+- **Right-click anywhere on the map**, including existing drawn objects, to open a menu: Finish & Save / Undo last point / Cancel.
+- Keyboard shortcuts during measurement: **Enter** (finish), **Backspace** (undo), **Esc** (close context menu or cancel measurement).
+- Click user-created point markers for exact coordinate snapping. Clicking a line segment uses the clicked geographic position.
 
 ## Layer UX and persistence
 
