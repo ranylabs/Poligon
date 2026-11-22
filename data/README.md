@@ -41,7 +41,8 @@ The website also imports GML files from the IMO's Global SAR Plan system or othe
 - Click **Import IMO GISIS GML** under *Search & Rescue Regions*.
 - The parser supports `gml:MultiSurface` with multiple `gml:Polygon` elements, `gml:exterior`, `gml:interior` and `gml:posList` / `gml:pos`.
 - **IMO COMSAR.1/Circ.61 specifies longitude then latitude in `posList`** (not the user-facing lat/lon display order).
-- Imported polygons are separate reference layers, with individual color controls.
+- Multiple imported GML and GeoJSON files can be **appended** into one reference layer, with individual color controls and an option to hide/show the combined layer.
+- If two input files share the same internal Area Number, unique in-session imported IDs prevent color overrides from colliding.
 - Use **Export imported GeoJSON** to convert and retain the layer; this does not verify its authority.
 - A free read-only IMO web account may be needed to access GISIS. Do not assume that a bulk global export is offered.
 
