@@ -264,7 +264,7 @@ const clean=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;
 function parse(s,t){s=norm(s).trim();let h=s.match(/[NSEW]/)?.[0];if(h&&!(t==='lat'?'NS':'EW').includes(h))return null;let a=s.replace(/[NSEW°'"]/g,' ').match(/[-+]?\d+(?:\.\d+)?/g);if(!a||a.length>3)return null;let d=+a[0],m=+(a[1]||0),v=+(a[2]||0);if(m>=60||v>=60)return null;let x=(Math.abs(d)+m/60+v/3600)*(h?(h==='S'||h==='W'?-1:1):d<0?-1:1);return Math.abs(x)<=(t==='lat'?90:180)?x:null}
 function ddm(x,t){let a=Math.abs(x),d=Math.floor(a),m=(a-d)*60;return String(d).padStart(t==='lat'?2:3,'0')+'°'+m.toFixed(3).padStart(6,'0')+"'"+(t==='lat'?(x>=0?'N':'S'):(x>=0?'E':'W'))}
 function addPoint(a='',b=''){let e=document.createElement('div');e.className='pt';e.innerHTML='<input class="lat" placeholder="Latitude"><input class="lon" placeholder="Longitude"><button onclick="this.parentNode.remove()">×</button>';e.querySelector('.lat').value=a;e.querySelector('.lon').value=b;$('points').appendChild(e)}
-function detect(){let s=norm($('paste').value),res=[];let part=String.raw`\d{1,3}(?:\.\d+)?(?:\s*°?\s*\d{1,2}(?:\.\d+)?)?(?:\s*['"]?\s*\d{1,2}(?:\.\d+)?)?`;let re=new RegExp('('+part+'\\s*[\'"]?\\s*[NS])\\s*[,;|/:-]?\\s*('+part+'\\s*[\'"]?\\s*[EW])','g'),m;while((m=re.exec(s))){let a=parse(m[1],'lat'),b=parse(m[2],'lon');if(a!==null&&b!==null)res.push([a,b])}if(!res.length)for(let line of s.split('\n')){let m=line.match(/([-+]?\d{1,2}\.\d+)\s*[,;\s]\s*([-+]?\d{1,3}\.\d+)/);if(m&&Math.abs(+m[1])<=90&&Math.abs(+m[2])<=180)res.push([+m[1],+m[2]])}if(res.length){$('points').innerHTML='';res.forEach(p=>addPoint(ddm(p[0],'lat'),ddm(p[1],'lon')))}$('detected').textContent=res.length+' coordinate pairs detected'}
+function detect(){let s=norm($('paste').value),res=[];let part=String.raw`\d{1,3}(?:\.\d+)?(?:\s*°?\s*\d{1,2}(?:\.\d+)?)?(?:\s*['"]?\s*\d{1,2}(?:\.\d+)?)?`;let re=new RegExp('('+part+'\\s*[\'"]?\\s*[NS])\\s*[,;|/:-]?\\s*('+part+'\\s*[\'"]?\\s*[EW])','g'),m;while((m=re.exec(s))){let a=parse(m[1],'lat'),b=parse(m[2],'lon');if(a!==null&&b!==null)res.push([a,b])}if(!res.length)for(let line of s.split('\n')){let m=line.match(/([-+]?\d{1,2}\.\d+)\s*[,;\s]\s*([-+]?\d{1,3}\.\d+)/);if(m&&Math.abs(+m[1])<=90&&Math.abs(+m[2])<=180)res.push([+m[1],+m[2]])}if(res.length){$('points').innerHTML='';res.forEach(p=>addPoint(ddm(p[0],'lat'),ddm(p[1],'lon')));revealAccordion('panel-points',true)}$('detected').textContent=res.length+' coordinate pairs detected'}
 function points(){let out=[];for(let r of document.querySelectorAll('.pt')){let a=r.querySelector('.lat').value,b=r.querySelector('.lon').value;if(!a&&!b)continue;let x=parse(a,'lat'),y=parse(b,'lon');if(x===null||y===null)throw Error('Invalid coordinate: '+a+' '+b);out.push([x,y])}return out}
 function resetEditor(){$('points').innerHTML='';addPoint();$('name').value='';$('buffer').value=0;editing=-1}
 function plot(){try{
@@ -275,6 +275,7 @@ function plot(){try{
  if(updated)objects[editing]=obj;else objects.push(obj);
  save();draw();zoom(p);resetEditor();
  notifyWorkspace((updated?'Updated ':'Saved ')+obj.name+' in Your Workspace');
+ revealSavedWorkspace();
  }catch(e){alert(e.message)}
 }
 function geo(o){let p=o.points.map(x=>[x[1],x[0]]);return o.type==='Point'?turf.point(p[0]):o.type==='Route'?turf.lineString(p):turf.polygon([[...p,p[0]]])}
@@ -341,6 +342,18 @@ function draw(){
   lists();
 }
 let workspaceToastTimer=null;
+function revealAccordion(id,scroll=false){
+ const panel=$(id);
+ if(!panel)return;
+ panel.open=true;
+ if(scroll)panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function revealSavedWorkspace(scroll=true){
+ const workspace=$('workspace');
+ if(!workspace)return;
+ workspace.open=true;
+ if(scroll)workspace.scrollIntoView({behavior:'smooth',block:'start'});
+}
 function notifyWorkspace(message){
  const toast=$('workspaceToast');
  if(!toast)return;
@@ -395,6 +408,8 @@ function lists(){
       editing=i;$('name').value=o.name;$('color').value=o.color;$('buffer').value=o.buffer;
       $('shape').value=o.type==='Route'?'route':'polygon';$('points').replaceChildren();
       o.points.forEach(p=>addPoint(ddm(p[0],'lat'),ddm(p[1],'lon')));
+      revealAccordion('panel-object',false);
+      revealAccordion('panel-points',false);
       $('name').focus();
       $('name').scrollIntoView({behavior:'smooth',block:'center'});
    }},
@@ -507,6 +522,7 @@ function finishMeasure(){
  toggleMode('');
  $('measureInfo').textContent='Saved measurement · '+fixedTotal.toFixed(2)+' NM';
  notifyWorkspace('Measurement saved to Your Workspace · '+fixedTotal.toFixed(2)+' NM');
+ revealSavedWorkspace();
 }
 function cancelMeasure(){
  if(mode!=='measure')return;
