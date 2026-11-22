@@ -2,7 +2,7 @@
   "type": "FeatureCollection",
   "name": "Eastern Mediterranean SAR/FIR reference — partial, not operational boundaries",
   "metadata": {
-    "version": "2026-11-22-reference-v3",
+    "version": "2026-11-22-reference-v4-israel-shaped-offshore-segment",
     "datum": "WGS84",
     "coordinate_order": "longitude,latitude",
     "status": "Partially verified East Mediterranean FIR-linked SRR references. Exact Malta FIR polygon added; Greece southern/western FIR boundary added; Lebanon partial ICAO 2023 FIR arc reference. ISR & EGY remain partial. Not a complete or validated maritime SRR collection.",
@@ -15,9 +15,11 @@
       "https://www.transport.gov.mt/LM_AIP_2026_83_EFF_11_JUN_2026-2.pdf-f11582",
       "https://hnhs.gr/wp-content/uploads/2024/12/2025_AnnualNM_EN.pdf",
       "https://www.eurocontrol.int/archive_download/all/node/14170",
-      "https://www.icao.int/MID/Documents/2023/ATM%20SG9/WP5.pdf"
+      "https://www.icao.int/MID/Documents/2023/ATM%20SG9/WP5.pdf",
+      "https://www.ngdc.noaa.gov/mgg/shorelines/shorelines.html",
+      "https://e-aip.azurefd.net/2026-08-06-AIRAC/html/eAIP/LL-ENR-4.1-en-GB.html"
     ],
-    "caution": "FIR/SRR links are supported by published agreements. This overlay is NOT a GISIS export. Arcs interpolated; Egypt source 2014; territorial/country-side boundaries omitted. Do not use to determine RCC responsibility.",
+    "caution": "Israel's northern offshore line now uses coast-derived curvature, constrained by official AIP endpoints, but is only cartographic approximation. ISR remains an open line; this is not verified GISIS SRR data.",
     "source_review": "Israel AIP effective 2026-08-06; Cyprus AIP 2026-05-14; Egypt ICAO 2014 (not current); IMO GMDSS Manual 2024 provisional SRRs warning. Malta AIP 2026 ENR 2.1+GEN3.6; Greek Hydrographic Notice 14/2025+Greece ENR 2.1; ICAO 2023 Beirut FIR coordinates."
   },
   "features": [
@@ -378,18 +380,27 @@
       "type": "Feature",
       "id": "israel-telaviv-fir-west-2026",
       "properties": {
-        "name": "Israel / Tel Aviv FIR — published western boundary (partial)",
+        "name": "Israel / Tel Aviv FIR — improved AIP offshore reference (not official SRR polygon)",
         "country": "Israel",
         "region": "Tel Aviv / JRCC Haifa",
         "kind": "FIR-linked SRR reference",
-        "completeness": "Partial boundary LINE only; no polygon",
-        "geometry_status": "partial_reference",
+        "completeness": "Published AIP anchor points; 46 NM BGN arc; generalized coastline-shaped northern segment (LINE, not polygon)",
+        "geometry_status": "partial_reference_with_modelled_coastline",
         "color": "#33b3ff",
         "source_date": "2026-08-06",
-        "notes": "Tel Aviv FIR western offshore boundary from Israel AIP ENR 2.1. Arc interpolation center uses published BGN VOR reference 32°00'47.2N 034°52'31.3E. Coastline-parallel 27 NM segment cannot be reconstructed accurately from endpoint-only specification; do not use to assign SAR coordination responsibility.",
+        "notes": "Israel AIP ENR 2.1 effective 06 August 2026: southern radius 46 NM about BGN DVOR 32°00'47.2N 034°52'31.3E; northern boundary from 32°43N 034°32E to 33°06N 034°35E described as 27 NM coastline-parallel. Intermediate points are modelled from GSHHG intermediate-resolution coastline and smoothly constrained to the AIP's published endpoints; AIP does not publish their exact path. Nearest-shore distances therefore are NOT uniformly 27NM. For GIS reference only. Screenshot-derived or Global SAR Hub proprietary coordinates were not used.",
         "source_url": "https://e-aip.azurefd.net/2026-08-06-AIRAC/html/eAIP/LL-ENR-2.1-en-GB.html",
-        "status": "PUBLISHED_VERTICES_WITH_INTERPOLATION",
-        "confidence": "AIP boundary coordinates; calculated 46 NM arc; 27 NM coastline-parallel section shown as a dashed schematic connection, not a precise marine delimitation."
+        "status": "PUBLISHED_AIP_VERTICES_AND_GEODESIC_46NM_ARC_PLUS_GENERALIZED_NORTHERN_27NM_PARALLEL_SHAPE",
+        "confidence": "AIP exact vertices and BGN DVOR reference. The coastline-parallel portion is a cartographic approximation based on GSHHG intermediate coastline, preserving both published AIP endpoints. It is not an authenticated 27 NM geodesic offset or GISIS SRR polygon.",
+        "processing_notes": {
+          "main_reference": "Israel AIP ENR 2.1 effective 2026-08-06",
+          "coast_source": "GSHHG intermediate coastline via Basemap 2.0 (GSHHS i)",
+          "coastal_geometry_method": "Local AEQD projected offshore offset 27 NM, interpolated and curvature correction constrained to both official AIP endpoints; intermediate line approx only.",
+          "model_points": 27,
+          "source_resolution": "GSHHG intermediate approx 1:250,000; generalized coastline",
+          "audited_utc": "2026-11-22",
+          "accuracy_warning": "Not an official digitized AIP 27NM offset nor IMO GISIS SRR geometry. Source anchors may not be exactly 27NM from modern coastline."
+        }
       },
       "geometry": {
         "type": "LineString",
@@ -593,6 +604,106 @@
           [
             34.53333333,
             32.71666667
+          ],
+          [
+            34.53270366,
+            32.73141026
+          ],
+          [
+            34.53207398,
+            32.74615385
+          ],
+          [
+            34.53144431,
+            32.76089744
+          ],
+          [
+            34.53152903,
+            32.77564103
+          ],
+          [
+            34.53234411,
+            32.79038462
+          ],
+          [
+            34.53315919,
+            32.80512821
+          ],
+          [
+            34.53397426,
+            32.8198718
+          ],
+          [
+            34.53359977,
+            32.83461539
+          ],
+          [
+            34.5312341,
+            32.84935898
+          ],
+          [
+            34.52981685,
+            32.86410257
+          ],
+          [
+            34.52934675,
+            32.87884616
+          ],
+          [
+            34.52887665,
+            32.89358975
+          ],
+          [
+            34.52840655,
+            32.90833334
+          ],
+          [
+            34.52793645,
+            32.92307692
+          ],
+          [
+            34.52746634,
+            32.93782051
+          ],
+          [
+            34.5273875,
+            32.9525641
+          ],
+          [
+            34.53099036,
+            32.96730769
+          ],
+          [
+            34.53459322,
+            32.98205128
+          ],
+          [
+            34.53819608,
+            32.99679487
+          ],
+          [
+            34.54179894,
+            33.01153846
+          ],
+          [
+            34.5454018,
+            33.02628205
+          ],
+          [
+            34.54939122,
+            33.04102564
+          ],
+          [
+            34.55787675,
+            33.05576923
+          ],
+          [
+            34.56636227,
+            33.07051282
+          ],
+          [
+            34.5748478,
+            33.08525641
           ],
           [
             34.58333333,
