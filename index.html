@@ -1,4 +1,15 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Poligon · Marine Mapper</title><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><style>*{box-sizing:border-box}body{margin:0;background:#0e1924;color:#e8f1fa;font:14px Arial}#app{display:flex;height:100vh}aside{width:390px;overflow:auto;padding:15px;background:#182837}#map{flex:1}section{background:#233747;border-radius:8px;padding:12px;margin:10px 0}h2{margin:0 0 8px;font-size:19px}h3{margin:0 0 9px;font-size:14px}input,textarea,select{background:#101f2b;color:white;border:1px solid #587083;border-radius:5px;padding:7px}textarea{width:100%;height:100px}button{background:#287fb1;color:white;border:0;border-radius:5px;padding:7px;margin:3px;cursor:pointer}button.active{background:#b7782d}.row{display:flex;gap:5px;align-items:center}.row>*{flex:1;min-width:0}.pt{display:grid;grid-template-columns:1fr 1fr 26px;gap:4px;margin:4px 0}.pt input{width:100%;min-width:0}.item{background:#142634;border-left:4px solid #40b8ed;padding:8px;margin:6px 0}.muted{font-size:12px;color:#afc6d5}#hud{position:absolute;z-index:999;bottom:22px;left:410px;background:#101d29e8;padding:8px;font:12px monospace;pointer-events:none}.leaflet-tooltip.measure{background:#162634;color:white;border:1px solid orange}@media(max-width:750px){#app{flex-direction:column}aside{width:100%;height:50vh}#map{height:50vh;flex:auto}#hud{left:8px;bottom:8px}}</style></head><body><div id="app"><aside><h2>POLIGON · Marine Mapper</h2><div class="muted">Prototype for planning, not for navigation</div><section><h3>1 · Object</h3><input id="name" placeholder="Object name" style="width:100%"><div class="row"><label>Color <input id="color" type="color" value="#2da6e9"></label><label>Buffer NM <input id="buffer" type="number" min="0" step=".1" value="0" style="width:70px"></label></div><select id="shape" style="width:100%"><option value="auto">Automatic: polygon for 3+ points</option><option value="route">Route / open line</option><option value="polygon">Polygon / closed area</option></select></section><section><h3>2 · Paste coordinates</h3><textarea id="paste" placeholder="A. 31°51.3′N 034°39.3′E&#10;B. 31°52.2′N 034°38.5′E"></textarea><button onclick="detect()">Detect</button><span id="detected" class="muted"></span></section><section><h3>3 · Edit points</h3><div id="points"></div><button onclick="addPoint()">+ Point</button><button id="addbtn" onclick="toggleMode('add')">+ From map</button><button onclick="plot()">Plot / Save</button><button onclick="resetEditor()">Clear editor</button></section><section><h3>4 · Objects</h3><div id="objectList"></div></section><section><h3>5 · Distance measurement</h3><p class="muted">Click anywhere, including existing line segments, polygon interiors and point markers. Existing point markers snap to their exact coordinates.</p><button id="measurebtn" onclick="toggleMode('measure')">Measure</button><button onclick="finishMeasure()">Finish</button><button onclick="toggleMode('')">Cancel</button><div id="measureInfo" class="muted"></div><div id="measureList"></div></section><section><h3>6 · Marine weather</h3><p class="muted">Open-Meteo model forecasts. Requires internet. Not observations.</p><button id="weatherbtn" onclick="toggleMode('weather')">Pick weather point</button><label>UTC hour <input type="datetime-local" id="hour"></label><button onclick="weather()">Refresh</button><div id="weatherData" class="muted">Select a position.</div></section><section><h3>7 · Project</h3><button onclick="exportKML()">Export KML</button><button onclick="exportJSON()">Save JSON</button><button onclick="document.getElementById('load').click()">Load JSON</button><input type="file" id="load" accept=".json" hidden onchange="importJSON(event)"><button onclick="fitAll()">Fit all</button><button onclick="deleteAll()">Delete all objects</button><p class="muted">Auto-saved on this browser only.</p></section><section><h3>8 · Search & Rescue Regions — source reference</h3>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Poligon · Marine Mapper</title><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><style>*{box-sizing:border-box}body{margin:0;background:#0e1924;color:#e8f1fa;font:14px Arial}#app{display:flex;height:100vh}aside{width:390px;overflow:auto;padding:15px;background:#182837}#map{flex:1}section{background:#233747;border-radius:8px;padding:12px;margin:10px 0}h2{margin:0 0 8px;font-size:19px}h3{margin:0 0 9px;font-size:14px}input,textarea,select{background:#101f2b;color:white;border:1px solid #587083;border-radius:5px;padding:7px}textarea{width:100%;height:100px}button{background:#287fb1;color:white;border:0;border-radius:5px;padding:7px;margin:3px;cursor:pointer}button.active{background:#b7782d}.row{display:flex;gap:5px;align-items:center}.row>*{flex:1;min-width:0}.pt{display:grid;grid-template-columns:1fr 1fr 26px;gap:4px;margin:4px 0}.pt input{width:100%;min-width:0}.item{background:#142634;border-left:4px solid #40b8ed;padding:8px;margin:6px 0}.muted{font-size:12px;color:#afc6d5}#hud{position:absolute;z-index:999;bottom:22px;left:410px;background:#101d29e8;padding:8px;font:12px monospace;pointer-events:none}.leaflet-tooltip.measure{background:#162634;color:white;border:1px solid orange}@media(max-width:750px){#app{flex-direction:column}aside{width:100%;height:50vh}#map{height:50vh;flex:auto}#hud{left:8px;bottom:8px}}
+#measureHud {position:absolute;right:12px;bottom:22px;z-index:1010;pointer-events:none;display:none;background:rgba(9,24,36,.95);border:1px solid #dca94e;color:#f9f4e7;border-radius:9px;min-width:235px;padding:10px 13px;font-size:12px;line-height:1.6;box-shadow:0 5px 18px #0007}
+#measureHud .metric {font-weight:700;color:#ffda82;font-size:18px;line-height:1.35}
+#measureHud .note{color:#b8cfe0;font-size:11px}
+#measureContextMenu {position:absolute;display:none;z-index:2005;min-width:213px;background:#132534;color:#edf5fa;border:1px solid #607382;border-radius:8px;padding:7px;box-shadow:0 7px 23px #0009}
+#measureContextMenu .menu-title{padding:5px 7px;font-weight:700;font-size:11px;color:#ffc36c}
+#measureContextMenu button{width:calc(100% - 6px);text-align:left;display:block;background:#223b50;border:1px solid #3f586b;margin:3px;padding:9px;font-weight:600}
+#measureContextMenu button:disabled{opacity:.4;cursor:not-allowed}
+#measureContextMenu button:hover:not(:disabled){background:#2d5d7a}
+#measureContextMenu button.danger{background:#69393b}
+@media(max-width:750px){#measureHud{right:6px;bottom:8px;min-width:190px;padding:8px;font-size:11px}#measureHud .metric{font-size:15px}}
+</style></head><body><div id="app"><aside><h2>POLIGON · Marine Mapper</h2><div class="muted">Prototype for planning, not for navigation</div><section><h3>1 · Object</h3><input id="name" placeholder="Object name" style="width:100%"><div class="row"><label>Color <input id="color" type="color" value="#2da6e9"></label><label>Buffer NM <input id="buffer" type="number" min="0" step=".1" value="0" style="width:70px"></label></div><select id="shape" style="width:100%"><option value="auto">Automatic: polygon for 3+ points</option><option value="route">Route / open line</option><option value="polygon">Polygon / closed area</option></select></section><section><h3>2 · Paste coordinates</h3><textarea id="paste" placeholder="A. 31°51.3′N 034°39.3′E&#10;B. 31°52.2′N 034°38.5′E"></textarea><button onclick="detect()">Detect</button><span id="detected" class="muted"></span></section><section><h3>3 · Edit points</h3><div id="points"></div><button onclick="addPoint()">+ Point</button><button id="addbtn" onclick="toggleMode('add')">+ From map</button><button onclick="plot()">Plot / Save</button><button onclick="resetEditor()">Clear editor</button></section><section><h3>4 · Objects</h3><div id="objectList"></div></section><section><h3>5 · Distance measurement — NM / True bearing</h3><p class="muted">Click map, lines or existing points. Move mouse to see live leg distance, total distance and initial true bearing (°T). Right-click the map for Finish / Undo / Cancel. Keyboard: Enter, Backspace, Esc.</p><button id="measurebtn" onclick="toggleMode('measure')">Measure</button><button onclick="finishMeasure()">Finish</button><button onclick="toggleMode('')">Cancel</button><div id="measureInfo" class="muted"></div><div id="measureList"></div></section><section><h3>6 · Marine weather</h3><p class="muted">Open-Meteo model forecasts. Requires internet. Not observations.</p><button id="weatherbtn" onclick="toggleMode('weather')">Pick weather point</button><label>UTC hour <input type="datetime-local" id="hour"></label><button onclick="weather()">Refresh</button><div id="weatherData" class="muted">Select a position.</div></section><section><h3>7 · Project</h3><button onclick="exportKML()">Export KML</button><button onclick="exportJSON()">Save JSON</button><button onclick="document.getElementById('load').click()">Load JSON</button><input type="file" id="load" accept=".json" hidden onchange="importJSON(event)"><button onclick="fitAll()">Fit all</button><button onclick="deleteAll()">Delete all objects</button><p class="muted">Auto-saved on this browser only.</p></section><section><h3>8 · Search & Rescue Regions — source reference</h3>
 <p class="muted">Only GISIS/authority-approved GML or GeoJSON should be used for operational responsibility. Regional source boundaries shown here are AIP/FIR references; Cairo 2014 is historical. Provisional Cyprus–Türkiye–Greece boundaries are disputed.</p>
 <label><input type="checkbox" id="srrToggle" onchange="toggleSrrReference(this.checked)"> Show selected Mediterranean boundaries (reference)</label>
 <p class="muted">Choose each country separately. Israel is selected by default; Cyprus and Egypt can be shown independently, even where references overlap.</p><div id="srrColorControls" style="margin-top:7px" class="muted">Enable regional layer to choose individual countries and edit colors.</div>
@@ -22,7 +33,7 @@
 <div id="importedSrrColors" class="muted"></div>
 <p class="muted"><a style="color:#91d9ff" href="https://www.imo.org/en/ourwork/safety/pages/globalsarplan.aspx" target="_blank" rel="noopener">IMO GISIS Global SAR Plan — authoritative verification</a></p>
 <div id="srrStatus" class="muted">Regional layer off. Line colors are stored in this browser.</div>
-<div id="globalSrrStatus" class="muted"></div></section></aside><div id="map"></div></div><div id="hud">Move mouse over map</div><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script><script>
+<div id="globalSrrStatus" class="muted"></div></section></aside><div id="map"><div id="measureHud"></div><div id="measureContextMenu" role="menu" aria-label="Measurement actions"><div class="menu-title">MEASUREMENT ACTIONS</div><button id="measureMenuFinish" onclick="finishMeasure()">Finish &amp; save · Enter</button><button id="measureMenuUndo" onclick="undoMeasurePoint()">Undo last point · Backspace</button><button class="danger" onclick="cancelMeasure()">Cancel measurement · Esc</button></div></div></div><div id="hud">Move mouse over map</div><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script><script>
 const $=id=>document.getElementById(id),KEY='poligon-v1',map=L.map('map').setView([32.5,34.5],8),group=L.layerGroup().addTo(map);
 const tiles=(name,z)=>L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/'+name+'/MapServer/tile/{z}/{y}/{x}',{maxZoom:z,attribution:'Tiles © Esri'});
 const street=tiles('World_Street_Map',19).addTo(map),ocean=tiles('Ocean/World_Ocean_Base',16),topo=tiles('World_Topo_Map',19),sat=tiles('World_Imagery',19),seamarks=L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png',{attribution:'© OpenSeaMap',maxZoom:18}).addTo(map);
@@ -101,8 +112,115 @@ function draw(){
 }
 function lists(){$('objectList').innerHTML='';objects.forEach((o,i)=>{let d=document.createElement('div');d.className='item';d.style.borderColor=o.color;d.innerHTML='<b>'+clean(o.name)+'</b><div class="muted">'+o.type+' · '+o.points.length+' points · Buffer '+o.buffer+' NM</div>';[['Hide/Show',()=>{o.visible=!o.visible;save();draw()}],['Edit',()=>{editing=i;$('name').value=o.name;$('color').value=o.color;$('buffer').value=o.buffer;$('shape').value=o.type==='Route'?'route':'polygon';$('points').innerHTML='';o.points.forEach(p=>addPoint(ddm(p[0],'lat'),ddm(p[1],'lon')))}],['Zoom',()=>zoom(o.points)],['Delete',()=>{objects.splice(i,1);save();draw()}]].forEach(([t,f])=>{let b=document.createElement('button');b.textContent=t;b.onclick=f;d.appendChild(b)});$('objectList').appendChild(d)});$('measureList').innerHTML='';measures.forEach((m,i)=>{let d=document.createElement('div');d.className='item';d.textContent=m.name+' · '+total(m.points).toFixed(2)+' NM ';[['Hide/Show',()=>{m.visible=!m.visible;save();draw()}],['Zoom',()=>zoom(m.points)],['Delete',()=>{measures.splice(i,1);save();draw()}]].forEach(([t,f])=>{let b=document.createElement('button');b.textContent=t;b.onclick=f;d.appendChild(b)});$('measureList').appendChild(d)})}
 function zoom(p){if(p.length===1)map.setView(p[0],13);else map.fitBounds(L.latLngBounds(p),{padding:[40,40]})}function fitAll(){let p=[...objects.flatMap(o=>o.points),...measures.flatMap(m=>m.points)];if(p.length)zoom(p)}
-function toggleMode(m){mode=mode===m?'':m;draft=[];if(preview)map.removeLayer(preview);preview=null;['addbtn','measurebtn','weatherbtn'].forEach(id=>$(id).classList.remove('active'));if(mode)$(mode==='add'?'addbtn':mode==='measure'?'measurebtn':'weatherbtn').classList.add('active');map.getContainer().style.cursor=mode?'crosshair':''}
-function finishMeasure(){if(draft.length>=2){measures.push({name:'Measurement '+(measures.length+1),points:[...draft],visible:true});save();draw()}toggleMode('')}
+let activeMeasureMarkers=[];
+function closeMeasureMenu(){
+ $('measureContextMenu').style.display='none';
+}
+function clearMeasureDraftGraphics(){
+ if(preview){map.removeLayer(preview);preview=null}
+ activeMeasureMarkers.forEach(layer=>map.removeLayer(layer));
+ activeMeasureMarkers=[];
+}
+function renderMeasureMarkers(){
+ activeMeasureMarkers.forEach(layer=>map.removeLayer(layer));
+ activeMeasureMarkers=draft.map((p,index)=>{
+   const marker=L.circleMarker(p,{radius:5,color:'#ffcc66',weight:2,fillColor:'#1d2732',fillOpacity:1,interactive:false});
+   marker.addTo(map);
+   return marker;
+ });
+}
+function trueBearing(a,b){
+ const r=Math.PI/180, p1=a[0]*r,p2=b[0]*r,dlon=(b[1]-a[1])*r;
+ const y=Math.sin(dlon)*Math.cos(p2);
+ const x=Math.cos(p1)*Math.sin(p2)-Math.sin(p1)*Math.cos(p2)*Math.cos(dlon);
+ return ((Math.atan2(y,x)*180/Math.PI)%360+360)%360;
+}
+function compass16(degrees){
+ const d=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+ return d[Math.round(degrees/22.5)%16];
+}
+function bearingFormat(from,to){
+ if(dist(from,to)<0.000001)return '—';
+ const heading=trueBearing(from,to);
+ return heading.toFixed(1).padStart(5,'0')+'°T ('+compass16(heading)+')';
+}
+function updateMeasureDisplay(cursor){
+ const hud=$('measureHud');
+ if(mode!=='measure'){hud.style.display='none';return}
+ hud.style.display='block';
+ const n=draft.length;
+ if(!n){
+   hud.innerHTML='<b>MEASURE MODE</b><br>Click the first point.<div class="note">Right-click for measurement controls</div>';
+   $('measureInfo').textContent='Click first point · Right-click for options';
+   return;
+ }
+ const committed=total(draft);
+ let leg=null,bearing='—',cumulative=committed;
+ if(cursor){
+   const target=Array.isArray(cursor)?cursor:[cursor.lat,cursor.lng];
+   leg=dist(draft[n-1],target);
+   cumulative+=leg;
+   bearing=bearingFormat(draft[n-1],target);
+ }else if(n>=2){
+   leg=dist(draft[n-2],draft[n-1]);
+   bearing=bearingFormat(draft[n-2],draft[n-1]);
+ }
+ const moving=!!cursor;
+ hud.innerHTML='<b>MEASURE · '+n+' POINT'+(n===1?'':'S')+'</b>'+
+  '<br>'+(moving?'Live leg':'Last leg')+': <span class="metric">'+(leg===null?'—':leg.toFixed(2)+' NM')+'</span>'+
+  '<br>True bearing: <b>'+bearing+'</b>'+
+  '<br>'+(moving?'Total including cursor':'Confirmed total')+': <span class="metric">'+cumulative.toFixed(2)+' NM</span>'+
+  '<br><span class="note">Right-click → Finish / Undo / Cancel</span>';
+ $('measureInfo').textContent=(moving?'Live':'Fixed')+' · Leg '+(leg===null?'—':leg.toFixed(2)+' NM')+
+  ' · Bearing '+bearing+' · Total '+cumulative.toFixed(2)+' NM';
+}
+function toggleMode(m){
+ const next=mode===m?'':m;
+ closeMeasureMenu();
+ clearMeasureDraftGraphics();
+ draft=[];
+ mode=next;
+ ['addbtn','measurebtn','weatherbtn'].forEach(id=>$(id).classList.remove('active'));
+ if(mode)$(mode==='add'?'addbtn':mode==='measure'?'measurebtn':'weatherbtn').classList.add('active');
+ map.getContainer().style.cursor=mode?'crosshair':'';
+ updateMeasureDisplay();
+ if(mode!=='measure'&&$('measureInfo'))$('measureInfo').textContent='';
+}
+function finishMeasure(){
+ closeMeasureMenu();
+ if(mode!=='measure')return;
+ if(draft.length<2){$('measureInfo').textContent='At least two points required to save a measurement.';return}
+ const fixedTotal=total(draft);
+ measures.push({name:'Measurement '+(measures.length+1),points:[...draft],visible:true});
+ save();
+ draw();
+ toggleMode('');
+ $('measureInfo').textContent='Saved measurement · '+fixedTotal.toFixed(2)+' NM';
+}
+function cancelMeasure(){
+ if(mode!=='measure')return;
+ toggleMode('');
+ $('measureInfo').textContent='Measurement cancelled.';
+}
+function undoMeasurePoint(){
+ closeMeasureMenu();
+ if(mode!=='measure'||!draft.length)return;
+ draft.pop();
+ clearMeasureDraftGraphics();
+ renderMeasureMarkers();
+ if(draft.length>1)preview=L.polyline(draft,{color:'#ffc04a',dashArray:'5 5',weight:3,interactive:false}).addTo(map);
+ updateMeasureDisplay();
+}
+function showMeasureMenu(event){
+ if(mode!=='measure')return;
+ const menu=$('measureContextMenu'), box=map.getContainer().getBoundingClientRect();
+ $('measureMenuFinish').disabled=draft.length<2;
+ $('measureMenuUndo').disabled=draft.length<1;
+ menu.style.display='block';
+ const x=event.clientX-box.left, y=event.clientY-box.top;
+ menu.style.left=Math.max(5,Math.min(x,box.width-menu.offsetWidth-5))+'px';
+ menu.style.top=Math.max(5,Math.min(y,box.height-menu.offsetHeight-5))+'px';
+}
 function processMapSelection(latlng){
   const p=[latlng.lat,latlng.lng];
   if(mode==='add'){
@@ -110,10 +228,12 @@ function processMapSelection(latlng){
     if(rows.length===1&&!rows[0].querySelector('.lat').value)rows[0].remove();
     addPoint(ddm(p[0],'lat'),ddm(p[1],'lon'));
   }else if(mode==='measure'){
+    closeMeasureMenu();
     draft.push(p);
-    if(preview)map.removeLayer(preview);
-    preview=L.polyline(draft,{color:'#ffc04a',dashArray:'5 5',interactive:false}).addTo(map);
-    $('measureInfo').textContent=draft.length+' points · '+total(draft).toFixed(2)+' NM';
+    clearMeasureDraftGraphics();
+    renderMeasureMarkers();
+    if(draft.length>1)preview=L.polyline(draft,{color:'#ffc04a',dashArray:'5 5',weight:3,interactive:false}).addTo(map);
+    updateMeasureDisplay();
   }else if(mode==='weather'){
     selected=p;
     if(weatherPin)map.removeLayer(weatherPin);
@@ -122,7 +242,39 @@ function processMapSelection(latlng){
   }
 }
 map.on('click',e=>processMapSelection(e.latlng));
-map.on('mousemove',e=>{$('hud').textContent=ddm(e.latlng.lat,'lat')+'  '+ddm(e.latlng.lng,'lon')+' · '+e.latlng.lat.toFixed(6)+', '+e.latlng.lng.toFixed(6);if(mode==='measure'&&draft.length){if(preview)map.removeLayer(preview);preview=L.polyline([...draft,[e.latlng.lat,e.latlng.lng]],{color:'#ffc04a',dashArray:'5 5',interactive:false}).addTo(map);$('measureInfo').textContent=(total(draft)+dist(draft.at(-1),[e.latlng.lat,e.latlng.lng])).toFixed(2)+' NM preview'}});
+function onMapPointerMove(ev){
+  if(ev.target?.closest?.('.leaflet-control, #measureContextMenu'))return;
+  const location=map.mouseEventToLatLng(ev);
+  $('hud').textContent=ddm(location.lat,'lat')+'  '+ddm(location.lng,'lon')+' · '+location.lat.toFixed(6)+', '+location.lng.toFixed(6);
+  if(mode==='measure'){
+    if(draft.length){
+      const target=[location.lat,location.lng];
+      if(preview)map.removeLayer(preview);
+      preview=L.polyline([...draft,target],{color:'#ffc04a',dashArray:'5 5',weight:3,interactive:false}).addTo(map);
+      updateMeasureDisplay(target);
+    }else updateMeasureDisplay();
+  }
+}
+map.getContainer().addEventListener('pointermove',onMapPointerMove,{capture:true,passive:true});
+map.getContainer().addEventListener('contextmenu',event=>{
+ if(mode!=='measure'||event.target?.closest?.('.leaflet-control, #measureContextMenu'))return;
+ event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
+ showMeasureMenu(event);
+},true);
+$('measureContextMenu').addEventListener('click',ev=>ev.stopPropagation());
+$('measureContextMenu').addEventListener('dblclick',ev=>ev.stopPropagation());
+$('measureContextMenu').addEventListener('mousedown',ev=>ev.stopPropagation());
+document.addEventListener('keydown',event=>{
+ if(mode!=='measure')return;
+ if(['INPUT','TEXTAREA','SELECT'].includes(event.target?.tagName))return;
+ if(event.key==='Enter'){event.preventDefault();finishMeasure()}
+ else if(event.key==='Backspace'){event.preventDefault();undoMeasurePoint()}
+ else if(event.key==='Escape'){
+   event.preventDefault();
+   if($('measureContextMenu').style.display==='block')closeMeasureMenu();
+   else cancelMeasure();
+ }
+});
 map.on('contextmenu',e=>{let s=ddm(e.latlng.lat,'lat')+' '+ddm(e.latlng.lng,'lon');if(navigator.clipboard)navigator.clipboard.writeText(s).catch(()=>prompt('Copy',s));else prompt('Copy',s)});
 function save(){try{localStorage.setItem('poligon-v1',JSON.stringify({objects,measures}))}catch(e){console.warn(e)}}function deleteAll(){if(confirm('Delete all objects?')){objects=[];save();draw()}}
 function download(n,c,t){let u=URL.createObjectURL(new Blob([c],{type:t})),a=document.createElement('a');a.href=u;a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
