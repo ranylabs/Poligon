@@ -94,15 +94,79 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 @media(max-width:750px){.map-reference-warning{top:40px;left:50px;font-size:9px;max-width:70%}}.workspace-toast{position:absolute;z-index:2200;top:90px;left:50%;transform:translate(-50%,-8px);padding:10px 14px;border-radius:8px;background:#0b443c;color:#d6fff4;border:1px solid #25ad91;box-shadow:0 9px 30px #061622aa;font-size:12px;font-weight:750;opacity:0;pointer-events:none;max-width:80%;text-align:center;transition:opacity .2s,transform .2s}
 .workspace-toast.visible{opacity:1;transform:translate(-50%,0)}
 @media(max-width:750px){.workspace-toast{top:80px;font-size:11px}}
+
+/* Collapsible tool panels + readable, touch-friendly type */
+body{font-size:15px;line-height:1.52}
+aside{font-size:14.5px;width:438px;min-width:350px}
+.app-brand{padding-top:19px;padding-bottom:17px}
+.brand-title{font-size:20px}.brand-subtitle{font-size:12px}.brand-eyebrow{font-size:10px}
+.workspace-caption{font-size:12.5px;line-height:1.6}
+.workspace-heading h3{font-size:17px}
+.workspace-counter{font-size:12px}
+.workspace-group-heading{font-size:11.5px;letter-spacing:.075em}
+.workspace-group-count{font-size:12px}
+.workspace-kicker{font-size:11px}
+.workspace-local{font-size:10px}
+.saved-card-name{font-size:14px}
+.saved-card-meta{font-size:12px;line-height:1.55}
+.saved-card-type{font-size:10.5px}
+.saved-card-controls button{font-size:11.5px;min-height:32px;padding:6px 8px}
+.workspace-empty{font-size:12.5px}
+.tool-panel h3{font-size:15px}
+.tool-panel .muted{font-size:13px;line-height:1.62}
+.tool-panel label{font-size:13.5px}
+.tool-panel input:not([type=color]),.tool-panel textarea,.tool-panel select{font-size:13.5px}
+.tool-panel button{font-size:13px;min-height:39px;padding:8px 11px}
+.tool-hint{font-size:12.5px;line-height:1.55}
+.tool-divider{font-size:11px}
+.tool-divider small{font-size:10px}
+.pt{gap:5px}
+.pt input{font-size:13px}
+#measureInfo,#weatherData{font-size:13px}
+#mapProjectSummary{font-size:12.5px}
+#hud{left:452px;font-size:12.5px}
+#measureHud{font-size:13px}
+.accordion-tool{display:block;border:1px solid #315266;border-radius:10px;margin:10px 0;overflow:clip;padding:0;background:linear-gradient(180deg,#172e41,#122737)}
+.accordion-tool[open]{border-color:#4c859b;box-shadow:0 5px 18px #0417214d}
+.accordion-trigger{display:flex;justify-content:space-between;gap:11px;align-items:center;list-style:none;cursor:pointer;user-select:none;min-height:60px;padding:14px 15px;border-radius:9px;color:#e7f3fa;transition:background-color .14s,color .14s}
+.accordion-trigger::-webkit-details-marker{display:none}
+.accordion-trigger::marker{display:none}
+.accordion-trigger:hover{background:#245065;color:#fff}
+.accordion-trigger:focus-visible{outline:2px solid #63dfec;outline-offset:-4px;background:#264e61}
+.accordion-tool[open]>.accordion-trigger{border-radius:9px 9px 0 0;background:#1b3b4e;border-bottom:1px solid #356074;color:#f5fcff}
+.accordion-title{display:flex;align-items:center;gap:10px;min-width:0;font-size:15px;font-weight:780;letter-spacing:.01em;line-height:1.4}
+.accordion-title .tool-index{height:30px;min-width:30px;font-size:11.5px;margin:0;flex:none;border-radius:8px;color:#9deaf4;background:#0b5367}
+.accordion-chevron{width:12px;height:12px;flex:none;margin-right:5px;border-right:2px solid #9ec1d2;border-bottom:2px solid #9ec1d2;transform:rotate(45deg) translate(-2px,-2px);transition:transform .18s,border-color .18s}
+details[open]>.accordion-trigger .accordion-chevron{transform:rotate(225deg) translate(-2px,-2px);border-color:#6ee1ee}
+.accordion-content{padding:15px 15px 16px}
+.accordion-tool[open]>.accordion-content{animation:accordionOpen .17s ease-out both}
+@keyframes accordionOpen{from{opacity:.6;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+.accordion-workspace{display:block;padding:0;overflow:clip;margin:13px 0 17px}
+.accordion-workspace .workspace-trigger{padding:14px 13px;min-height:55px;gap:9px;background:#133b48}
+.accordion-workspace .workspace-trigger:hover{background:#184d59}
+.workspace-trigger-name{display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:850;letter-spacing:.12em;color:#8ae4eb;flex:1}
+.accordion-workspace>.accordion-trigger .accordion-chevron{border-color:#8cd5e0}
+.accordion-workspace[open]>.accordion-trigger{border-bottom:1px solid #326272;border-radius:9px 9px 0 0}
+.accordion-workspace>.workspace-content{padding:13px 12px 14px}
+.accordion-workspace>.workspace-content .workspace-heading{margin:0 0 5px}
+.accordion-workspace>.workspace-content .workspace-local{margin-left:auto}
+@media(max-width:900px){aside{width:383px;min-width:340px}#hud{left:395px}}
+@media(max-width:750px){aside{width:100%;min-width:0;height:54vh}#hud{left:9px;max-width:calc(100% - 18px)}.accordion-trigger{min-height:57px}}
+@media(prefers-reduced-motion:reduce){.accordion-trigger,.accordion-chevron{transition:none}.accordion-tool[open]>.accordion-content{animation:none}}
 </style></head><body><div id="app"><aside aria-label="Poligon controls"><div class="app-brand">
   <div class="brand-logo" aria-hidden="true">P<span>·</span></div>
   <div class="brand-copy"><div class="brand-eyebrow">MARITIME OPERATIONS</div><div class="brand-title">POLIGON <span>Mapper</span></div><div class="brand-subtitle">Geospatial planning workspace</div></div>
   <span class="brand-version">BETA</span>
 </div>
-<section id="workspace" class="workspace-panel" aria-labelledby="workspaceTitle">
-  <div class="workspace-kicker"><span class="workspace-kicker-dot"></span> YOUR WORKSPACE <span class="workspace-local">LOCAL SAVE</span></div>
-  <div class="workspace-heading"><h3 id="workspaceTitle">Saved on this device</h3><span id="workspaceCounter" class="workspace-counter">0 saved</span></div>
-  <p class="workspace-caption">These are your saved results — not creation tools. Select an action on each card to manage it.</p>
+<details id="workspace" class="workspace-panel accordion-workspace" open>
+  <summary class="accordion-trigger workspace-trigger" aria-label="Show or hide saved workspace">
+    <span class="workspace-trigger-name"><span class="workspace-kicker-dot"></span> YOUR WORKSPACE</span>
+    <span id="workspaceCounter" class="workspace-counter">0 saved</span>
+    <span class="accordion-chevron" aria-hidden="true"></span>
+  </summary>
+  <div class="accordion-content workspace-content">
+    <div class="workspace-heading"><h3 id="workspaceTitle">Saved on this device</h3><span class="workspace-local">LOCAL SAVE</span></div>
+    <p class="workspace-caption">These are your saved results — not creation tools. Select an action on each card to manage it.</p>
   <div class="workspace-group">
     <div class="workspace-group-heading"><span class="workspace-group-icon object-icon">⬡</span><span>PLOTTED OBJECTS</span><span id="objectCount" class="workspace-group-count">0</span></div>
     <div id="objectList" aria-label="Saved map objects"></div>
@@ -111,8 +175,50 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
     <div class="workspace-group-heading"><span class="workspace-group-icon measure-icon">⌁</span><span>SAVED MEASUREMENTS</span><span id="measureCount" class="workspace-group-count">0</span></div>
     <div id="measureList" aria-label="Saved distance measurements"></div>
   </div>
-</section>
-<div class="tool-divider"><span>MAP TOOLS</span><small>CREATE · MEASURE · ANALYSE</small></div><section class="tool-panel"><h3><span class="tool-index">01</span> Object settings</h3><input id="name" placeholder="Object name" style="width:100%"><div class="row"><label>Color <input id="color" type="color" value="#2da6e9"></label><label>Buffer NM <input id="buffer" type="number" min="0" step=".1" value="0" style="width:70px"></label></div><select id="shape" style="width:100%"><option value="auto">Automatic: polygon for 3+ points</option><option value="route">Route / open line</option><option value="polygon">Polygon / closed area</option></select></section><section class="tool-panel"><h3><span class="tool-index">02</span> Paste coordinates</h3><textarea id="paste" placeholder="A. 31°51.3′N 034°39.3′E&#10;B. 31°52.2′N 034°38.5′E"></textarea><button onclick="detect()">Detect</button><span id="detected" class="muted"></span></section><section class="tool-panel"><h3><span class="tool-index">03</span> Coordinate editor</h3><div id="points"></div><button onclick="addPoint()">+ Point</button><button id="addbtn" onclick="toggleMode('add')">+ From map</button><button class="primary-action" onclick="plot()">⬡ &nbsp;Plot & Save object</button><button onclick="resetEditor()">Clear editor</button><p class="tool-hint">After saving, find the object in <b>Your Workspace</b> at the top of this panel.</p></section><section class="tool-panel measure-tool"><h3><span class="tool-index">04</span> Measure distance · NM / °T</h3><p class="muted">Click map, lines or existing points. Move mouse to see live leg distance, total distance and initial true bearing (°T). Right-click the map for Finish / Undo / Cancel. Keyboard: Enter, Backspace, Esc.</p><button class="primary-action amber-action" id="measurebtn" onclick="toggleMode('measure')">⌁ &nbsp;Start measuring</button><button class="secondary-action" onclick="finishMeasure()">Finish & save</button><button class="quiet-action" onclick="cancelMeasure()">Cancel</button><div id="measureInfo" class="muted" aria-live="polite"></div><p class="tool-hint">Finished measurements appear above under <b>Saved measurements</b> with an amber label.</p></section><section class="tool-panel"><h3><span class="tool-index">05</span> Marine weather</h3><p class="muted">Open-Meteo model forecasts. Requires internet. Not observations.</p><button id="weatherbtn" onclick="toggleMode('weather')">Pick weather point</button><label>UTC hour <input type="datetime-local" id="hour"></label><button onclick="weather()">Refresh</button><div id="weatherData" class="muted">Select a position.</div></section><section class="tool-panel"><h3><span class="tool-index">06</span> Project files</h3><button onclick="exportKML()">Export KML</button><button onclick="exportJSON()">Save JSON</button><button onclick="document.getElementById('load').click()">Load JSON</button><input type="file" id="load" accept=".json" hidden onchange="importJSON(event)"><button onclick="fitAll()">Fit all</button><button onclick="deleteAll()">Delete all objects</button><p class="muted">Auto-saved on this browser only.</p></section><section class="tool-panel"><h3><span class="tool-index">07</span> Search & Rescue Regions</h3>
+  </div>
+</details>
+<div class="tool-divider"><span>MAP TOOLS</span><small>CREATE · MEASURE · ANALYSE</small></div><details class="accordion-tool tool-panel" id="panel-object">
+    <summary class="accordion-trigger" aria-label="Expand or collapse Object settings">
+      <span class="accordion-title"><span class="tool-index">01</span><span>Object settings</span></span>
+      <span class="accordion-chevron" aria-hidden="true"></span>
+    </summary>
+    <div class="accordion-content"><input id="name" placeholder="Object name" style="width:100%"><div class="row"><label>Color <input id="color" type="color" value="#2da6e9"></label><label>Buffer NM <input id="buffer" type="number" min="0" step=".1" value="0" style="width:70px"></label></div><select id="shape" style="width:100%"><option value="auto">Automatic: polygon for 3+ points</option><option value="route">Route / open line</option><option value="polygon">Polygon / closed area</option></select></div>
+  </details><details class="accordion-tool tool-panel" id="panel-paste">
+    <summary class="accordion-trigger" aria-label="Expand or collapse Paste coordinates">
+      <span class="accordion-title"><span class="tool-index">02</span><span>Paste coordinates</span></span>
+      <span class="accordion-chevron" aria-hidden="true"></span>
+    </summary>
+    <div class="accordion-content"><textarea id="paste" placeholder="A. 31°51.3′N 034°39.3′E&#10;B. 31°52.2′N 034°38.5′E"></textarea><button onclick="detect()">Detect</button><span id="detected" class="muted"></span></div>
+  </details><details class="accordion-tool tool-panel" id="panel-points">
+    <summary class="accordion-trigger" aria-label="Expand or collapse Coordinate editor">
+      <span class="accordion-title"><span class="tool-index">03</span><span>Coordinate editor</span></span>
+      <span class="accordion-chevron" aria-hidden="true"></span>
+    </summary>
+    <div class="accordion-content"><div id="points"></div><button onclick="addPoint()">+ Point</button><button id="addbtn" onclick="toggleMode('add')">+ From map</button><button class="primary-action" onclick="plot()">⬡ &nbsp;Plot & Save object</button><button onclick="resetEditor()">Clear editor</button><p class="tool-hint">After saving, find the object in <b>Your Workspace</b> at the top of this panel.</p></div>
+  </details><details class="accordion-tool tool-panel measure-tool" id="panel-measure">
+    <summary class="accordion-trigger" aria-label="Expand or collapse Measure distance · NM / °T">
+      <span class="accordion-title"><span class="tool-index">04</span><span>Measure distance · NM / °T</span></span>
+      <span class="accordion-chevron" aria-hidden="true"></span>
+    </summary>
+    <div class="accordion-content"><p class="muted">Click map, lines or existing points. Move mouse to see live leg distance, total distance and initial true bearing (°T). Right-click the map for Finish / Undo / Cancel. Keyboard: Enter, Backspace, Esc.</p><button class="primary-action amber-action" id="measurebtn" onclick="toggleMode('measure')">⌁ &nbsp;Start measuring</button><button class="secondary-action" onclick="finishMeasure()">Finish & save</button><button class="quiet-action" onclick="cancelMeasure()">Cancel</button><div id="measureInfo" class="muted" aria-live="polite"></div><p class="tool-hint">Finished measurements appear above under <b>Saved measurements</b> with an amber label.</p></div>
+  </details><details class="accordion-tool tool-panel" id="panel-weather">
+    <summary class="accordion-trigger" aria-label="Expand or collapse Marine weather">
+      <span class="accordion-title"><span class="tool-index">05</span><span>Marine weather</span></span>
+      <span class="accordion-chevron" aria-hidden="true"></span>
+    </summary>
+    <div class="accordion-content"><p class="muted">Open-Meteo model forecasts. Requires internet. Not observations.</p><button id="weatherbtn" onclick="toggleMode('weather')">Pick weather point</button><label>UTC hour <input type="datetime-local" id="hour"></label><button onclick="weather()">Refresh</button><div id="weatherData" class="muted">Select a position.</div></div>
+  </details><details class="accordion-tool tool-panel" id="panel-project">
+    <summary class="accordion-trigger" aria-label="Expand or collapse Project files">
+      <span class="accordion-title"><span class="tool-index">06</span><span>Project files</span></span>
+      <span class="accordion-chevron" aria-hidden="true"></span>
+    </summary>
+    <div class="accordion-content"><button onclick="exportKML()">Export KML</button><button onclick="exportJSON()">Save JSON</button><button onclick="document.getElementById('load').click()">Load JSON</button><input type="file" id="load" accept=".json" hidden onchange="importJSON(event)"><button onclick="fitAll()">Fit all</button><button onclick="deleteAll()">Delete all objects</button><p class="muted">Auto-saved on this browser only.</p></div>
+  </details><details class="accordion-tool tool-panel" id="panel-regions">
+    <summary class="accordion-trigger" aria-label="Expand or collapse Search & Rescue Regions">
+      <span class="accordion-title"><span class="tool-index">07</span><span>Search & Rescue Regions</span></span>
+      <span class="accordion-chevron" aria-hidden="true"></span>
+    </summary>
+    <div class="accordion-content">
 <p class="muted">Only GISIS/authority-approved GML or GeoJSON should be used for operational responsibility. Regional source boundaries shown here are AIP/FIR references; Cairo 2014 is historical. Provisional Cyprus–Türkiye–Greece boundaries are disputed.</p>
 <label><input type="checkbox" id="srrToggle" checked onchange="toggleSrrReference(this.checked)"> Show selected Mediterranean boundaries (reference)</label>
 <p class="muted">Choose each country separately. Israel is selected by default; Cyprus and Egypt can be shown independently, even where references overlap.</p><div id="srrColorControls" style="margin-top:7px" class="muted">Enable regional layer to choose individual countries and edit colors.</div>
@@ -147,7 +253,8 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 <div id="importedSrrColors" class="muted"></div>
 <p class="muted"><a style="color:#91d9ff" href="https://www.imo.org/en/ourwork/safety/pages/globalsarplan.aspx" target="_blank" rel="noopener">IMO GISIS Global SAR Plan — authoritative verification</a></p>
 <div id="srrStatus" class="muted">Regional layer off. Line colors are stored in this browser.</div>
-<div id="globalSrrStatus" class="muted"></div></section></aside><div id="map"><div id="workspaceToast" class="workspace-toast" role="status" aria-live="polite"></div><div id="mapProjectSummary" aria-live="polite"><strong>0</strong> objects &nbsp;·&nbsp; <strong>0</strong> measurements saved</div><div id="israelIllustrationMapWarning" class="map-reference-warning" role="status">ISRAEL · ILLUSTRATIVE AREA — NOT AN OFFICIAL SAR BOUNDARY</div><div id="measureHud"></div><div id="measureContextMenu" role="menu" aria-label="Measurement actions"><div class="menu-title">MEASUREMENT ACTIONS</div><button id="measureMenuFinish" onclick="finishMeasure()">Finish &amp; save · Enter</button><button id="measureMenuUndo" onclick="undoMeasurePoint()">Undo last point · Backspace</button><button class="danger" onclick="cancelMeasure()">Cancel measurement · Esc</button></div></div></div><div id="hud">Move mouse over map</div><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script><script>
+<div id="globalSrrStatus" class="muted"></div></div>
+  </details></aside><div id="map"><div id="workspaceToast" class="workspace-toast" role="status" aria-live="polite"></div><div id="mapProjectSummary" aria-live="polite"><strong>0</strong> objects &nbsp;·&nbsp; <strong>0</strong> measurements saved</div><div id="israelIllustrationMapWarning" class="map-reference-warning" role="status">ISRAEL · ILLUSTRATIVE AREA — NOT AN OFFICIAL SAR BOUNDARY</div><div id="measureHud"></div><div id="measureContextMenu" role="menu" aria-label="Measurement actions"><div class="menu-title">MEASUREMENT ACTIONS</div><button id="measureMenuFinish" onclick="finishMeasure()">Finish &amp; save · Enter</button><button id="measureMenuUndo" onclick="undoMeasurePoint()">Undo last point · Backspace</button><button class="danger" onclick="cancelMeasure()">Cancel measurement · Esc</button></div></div></div><div id="hud">Move mouse over map</div><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script><script>
 const $=id=>document.getElementById(id),KEY='poligon-v1',map=L.map('map').setView([32.5,34.5],8),group=L.layerGroup().addTo(map);
 const tiles=(name,z)=>L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/'+name+'/MapServer/tile/{z}/{y}/{x}',{maxZoom:z,attribution:'Tiles © Esri'});
 const street=tiles('World_Street_Map',19).addTo(map),ocean=tiles('Ocean/World_Ocean_Base',16),topo=tiles('World_Topo_Map',19),sat=tiles('World_Imagery',19),seamarks=L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png',{attribution:'© OpenSeaMap',maxZoom:18}).addTo(map);
