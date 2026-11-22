@@ -75,35 +75,35 @@ For a valid non-self-crossing GeoJSON polygon, the geographic ring is ordered 1�
 
 **Follow-up for exact match:** obtain a current authority-provided Israel maritime SAR polygon / GML from IMO GISIS or JRCC, including any southern coastal exception. Validate origin, effective date and whether the notch is a SAR boundary before replacing a region dataset.
 
-## Israel southern offshore display: new NGA+AIP visual reconstruction (2026-11-22)
+## Israel offshore-to-coast **visual polygon** (22 Nov 2026)
 
-Poligon ships **two selectable views** for Israel:
+**This is an illustrative coastline-filled map shape, NOT a certified maritime Search and Rescue Region.**
 
-1. **Published AIP FIR western boundary** — `srr-eastmed-reference.geojson`, original open FIR reference line, containing the official AIP 31°18′N 034°13′E / 31°50′N 034°00′E section, the BGN 46 NM arc, and an interpolated coast-parallel northern segment.
-2. **Gaza coastal-context profile (illustrative; default view)** — `israel-gaza-coastal-composite-illustrative.geojson`. This open LineString connects published NGA Gaza security area **L4 → L3 → L2**, then published **31°50′N 034°00′E** AIP reference through the FIR offshore arc and northern segment.
+The map has two Israel display options. By default the reference category shows the **shaded illustrative coastal polygon** (`israel-gaza-coastal-composite-illustrative.geojson`), with a persistent map-level warning. Switching the Israel option to **Published Tel Aviv FIR line — AIP** displays the unmodified AIP offshore line instead.
 
-### NGA Gaza Area L coordinates used (WGS84)
+### Independent inputs used to draw the illustrative polygon
 
-| Position | Latitude | Longitude |
-|---|---|---|
-| L4 | 31°35′42.6″N | 034°29′27.6″E |
-| L3 | 31°46′48.0″N | 034°10′00.6″E |
-| L2 | 31°33′43.8″N | 033°56′40.8″E |
-| Connection to AIP FIR | 31°50′00″N | 034°00′00″E |
+1. **Israel AIP ENR 2.1, effective 6 August 2026:** published offshore vertex coordinates and a WGS84-approximated 46 NM arc around BGN VOR. The AIP line from 31°50′N 034°00′E onwards is not an entire coastal SAR polygon.
+2. **US NGA Sailing Directions Publication 140, Security Area 605:** positions 31°42′30″N 034°17′35″E and 31°35′43″N 034°29′28″E used as **illustrative southern coastal corner**. These NGA security area vertices are **not** SRR vertices.
+3. **Open coastline:** shoreline derived from a merged Israel + Palestinian territories land polygon, downloaded from [roeimichael/Israele](https://github.com/roeimichael/Israele/blob/main/data/israel.geojson), which was compiled from [geoBoundaries gbOpen](https://www.geoboundaries.org/), then simplified into ~0.3 NM latitude samples. The coastline closes the shape northward.
+4. **Unpublished illustrative extension:** the southern curved western edge extends the BGN 46 NM circle approximately to 31°33′N 034°09′E for visual comparison, **without an official publication authorizing that extension as a SAR boundary**.
 
-Primary source: [US NGA Sailing Directions Pub. 140, Israel, security areas K/L/M](https://msi.nga.mil/api/publications/download?key=16694492%2FSFH00000%2FPub140bk.pdf). US NGA publication explicitly says **no copyright claimed under U.S. Title 17**.
+The resulting polygon contains 397 ring positions, is closed and has no detected self-crossings. It is colored translucently and dashed so it is distinguishable from certified boundary data. It is a cartographic illustration and does not claim to reproduce, derive or certify the proprietary Global SAR Hub SRR dataset.
 
-The locations are independently sourced from US government nautical publications and Israel AIP. We **did not extract, reproduce or scrape** Global SAR Hub's proprietary map. The website's own [Terms and Conditions](https://www.globalsarhub.com/terms-and-conditions.html) forbid reusing or extracting those datasets without permission.
+### Shoreline source licensing and attribution
 
-**Critical:** NGA Area L is a **maritime security area, NOT SAR Region**, and the connection between the NGA security vertices and Israel AIP FIR is solely a **cartographic hypothesis for visual comparison**, not an established or ratified SAR jurisdiction geometry. The default illustrative line is explicitly labelled as such. Never use it to select a coordinating RCC. An officially certified maritime SRR line/GML remains outstanding.
+The data derive from geoBoundaries `gbOpen`, with original country-layer licensing verified against their individual metadata:
 
-### User-visible controls
+- [ISR gbOpen ADM0 metadata](https://www.geoboundaries.org/api/current/gbOpen/ISR/ADM0/) identifies **Open Data Commons Open Database License 1.0** (OpenStreetMap/Wambacher source).
+- [PSE gbOpen ADM0 metadata](https://www.geoboundaries.org/api/current/gbOpen/PSE/ADM0/) identifies **CC BY 4.0**, based on Sentinel-2 imagery.
+- **© OpenStreetMap contributors** and geoBoundaries source teams. The copied coastal sequence in this derivative is attributed here and in the GeoJSON metadata, and identified as modified and simplified.
+- Licence text for the ISR underlying data: [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/); PSE layer: [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
-- Israel is checked and the East Mediterranean layer enabled automatically at application opening.
-- Under Israel's country row, select **Gaza coastal profile · illustrative (NGA + AIP)** or **Published Tel Aviv FIR line · AIP**.
-- Switching changes the displayed line without changing operator-created geometry, measurements, or the stored source datasets.
-- Country visibility and colors remain independently selectable.
-- The formerly separate, distracting Gaza NAVTEX display checkbox was removed from the interface. The source-specific historical `gaza-maritime-notice-ntm1-2009.geojson` can still be inspected in GitHub.
+### Safety / data lineage
+
+NGA restricted maritime areas, airline FIR boundaries, political boundaries, territorial seas, EEZs and maritime SRRs are **not interchangeable**. The completed visual polygon is **not suitable to determine who should coordinate an SAR case**, or to make operational safety decisions.
+
+Only a verified and rights-cleared **IMO GISIS / JRCC-certified SRR GML or GeoJSON** can replace this illustrative polygon as an authoritative layer. The app supports GML import for this purpose, without changing the saved operator geometry.
 
 ## Additional worldwide coverage (not a global atlas)
 
@@ -135,6 +135,16 @@ The website also imports GML files from the IMO's Global SAR Plan system or othe
 - **Right-click anywhere on the map**, including existing drawn objects, to open a menu: Finish & Save / Undo last point / Cancel.
 - Keyboard shortcuts during measurement: **Enter** (finish), **Backspace** (undo), **Esc** (close context menu or cancel measurement).
 - Click user-created point markers for exact coordinate snapping. Clicking a line segment uses the clicked geographic position.
+
+## Workspace UI — saved assets vs editing tools
+
+Poligon separates **Your Workspace** (saved results) from **Map Tools** (actions). This was implemented to avoid confusing a saved measurement with a button:
+
+- Persistent **Your Workspace** section near the top of the left sidebar, with object and measurement counts.
+- Saved objects and saved measurements are **non-interactive content cards** with names, type labels, own accent colors, geometry/length metadata and a separate toolbar for Focus, Edit or Rename, Hide/Show and Delete.
+- Measurement cards have an amber accent, plotted object cards use their own object color. Clear empty states and a small saved-items counter on the map.
+- Deletion requires confirmation. No change to existing project JSON/localStorage formats, and all previously saved measurements/objects remain compatible.
+- Tool actions are visually separated below **MAP TOOLS**, and creation/saving buttons receive primary styles.
 
 ## Layer UX and persistence
 
