@@ -17,7 +17,8 @@
 <input type="file" id="srrGmlImport" accept=".gml,.xml,application/gml+xml,application/xml,text/xml" hidden onchange="importSrrGML(event)">
 <input type="file" id="srrImport" accept=".geojson,.json,application/geo+json,application/json" hidden onchange="importSrrGeoJSON(event)">
 <button onclick="clearImportedSrr()">Remove imported</button>
-<button onclick="exportImportedSrr()">Export imported GeoJSON</button>
+<label class="muted"><input type="checkbox" id="importedSrrToggle" checked onchange="toggleImportedSrr(this.checked)"> Show imported layers</label>
+<button onclick="exportImportedSrr()">Export combined imported GeoJSON</button>
 <div id="importedSrrColors" class="muted"></div>
 <p class="muted"><a style="color:#91d9ff" href="https://www.imo.org/en/ourwork/safety/pages/globalsarplan.aspx" target="_blank" rel="noopener">IMO GISIS Global SAR Plan — authoritative verification</a></p>
 <div id="srrStatus" class="muted">Regional layer off. Line colors are stored in this browser.</div>
@@ -301,27 +302,50 @@ async function toggleGlobalSrr(scope,visible){
   status.textContent=config.label+' unavailable: '+e.message+'. Import a licensed GeoJSON dataset instead.';
  }
 }
+function addImportedSrrCollection(document,filename){
+ const list=document.type==='FeatureCollection'?document.features:
+    document.type==='Feature'?[document]:
+    document.type&&document.coordinates?[{type:'Feature',properties:{},geometry:document}]:null;
+ if(!Array.isArray(list)||!list.length)throw Error('No GeoJSON features in source');
+ const previous=importedSrrData?.features||[];
+ const newFeatures=JSON.parse(JSON.stringify(list)).map((feature,i)=>{
+  feature.properties=feature.properties||{};
+  feature.properties.source_file=filename;
+  feature.id='import-'+filename+'-'+String(feature.id??i)+'-'+(previous.length+i);
+  return feature;
+ });
+ const merged={type:'FeatureCollection',features:[...previous,...newFeatures]};
+ if(merged.features.length>2000)throw Error('Imported layers exceed 2000 features');
+ const newLayer=makeSrrLayer(merged,'imported');
+ if(importedSrrLayer)map.removeLayer(importedSrrLayer);
+ importedSrrData=merged;
+ importedSrrLayer=newLayer;
+ if($('importedSrrToggle').checked)newLayer.addTo(map);
+ drawSrrColorInputs('imported',merged.features,'importedSrrColors');
+ const b=newLayer.getBounds();
+ if(b.isValid())map.fitBounds(b,{padding:[35,35]});
+ return newFeatures.length;
+}
 async function importSrrGeoJSON(e){
  const input=e.target,file=input.files&&input.files[0];if(!file)return;
  try{
   if(file.size>20000000)throw Error('Maximum import 20 MB');
-  const data=JSON.parse(await file.text());
-  const layer=makeSrrLayer(data,'imported');
-  if(importedSrrLayer)map.removeLayer(importedSrrLayer);
-  importedSrrLayer=layer.addTo(map);
-  importedSrrData=data;
-  const features=data.type==='FeatureCollection'?data.features:[data];
-  drawSrrColorInputs('imported',features,'importedSrrColors');
-  if(layer.getBounds().isValid())map.fitBounds(layer.getBounds(),{padding:[35,35]});
-  $('srrStatus').textContent='Imported '+file.name+' for this session. Confirm source authority and coordinate reference.';
+  const features=addImportedSrrCollection(JSON.parse(await file.text()),file.name);
+  $('srrStatus').textContent='Added '+features+' features from '+file.name+'. Imported total: '+importedSrrData.features.length;
  }catch(err){$('srrStatus').textContent='Import failed: '+err.message}
  finally{input.value=''}
+}
+function toggleImportedSrr(visible){
+ if(importedSrrLayer){
+  if(visible)importedSrrLayer.addTo(map);else map.removeLayer(importedSrrLayer)
+ }
 }
 function clearImportedSrr(){
  if(importedSrrLayer)map.removeLayer(importedSrrLayer);
  importedSrrLayer=null;importedSrrData=null;
  $('importedSrrColors').innerHTML='';
- $('srrStatus').textContent='Imported layer removed.';
+ $('importedSrrToggle').checked=true;
+ $('srrStatus').textContent='All imported layers removed.';
 }
 
 /* IMO COMSAR.1/Circ.61 compliant gml:MultiSurface / Polygon / posList importer.
@@ -374,12 +398,8 @@ async function importSrrGML(event){
  try{
   if(file.size>20000000)throw Error('GML file over 20 MB limit');
   const data=gmlRingsToFeatureCollection(await file.text(),file.name);
-  const layer=makeSrrLayer(data,'imported');
-  if(importedSrrLayer)map.removeLayer(importedSrrLayer);
-  importedSrrLayer=layer.addTo(map);importedSrrData=data;
-  drawSrrColorInputs('imported',data.features,'importedSrrColors');
-  if(layer.getBounds().isValid())map.fitBounds(layer.getBounds(),{padding:[40,40]});
-  $('srrStatus').textContent='Imported '+data.features.length+' GML polygons from '+file.name+'; validate GISIS source and currency.';
+  const count=addImportedSrrCollection(data,file.name);
+  $('srrStatus').textContent='Added '+count+' GML polygons from '+file.name+'. Imported total: '+importedSrrData.features.length+'. Validate GISIS provenance.';
  }catch(e){$('srrStatus').textContent='GML import failed: '+e.message}
  finally{event.target.value=''}
 }
