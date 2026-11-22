@@ -2,19 +2,23 @@
   "type": "FeatureCollection",
   "name": "Eastern Mediterranean SAR/FIR reference — partial, not operational boundaries",
   "metadata": {
-    "version": "2026-11-22-reference-v2",
+    "version": "2026-11-22-reference-v3",
     "datum": "WGS84",
     "coordinate_order": "longitude,latitude",
-    "status": "REFERENCE DATA ONLY — NOT validated GISIS SAR boundaries. Some Mediterranean SAR boundaries disputed/provisional; Israel has a 27 NM coastline-parallel edge drawn schematically; Egypt uses historical 2014 limits.",
+    "status": "Partially verified East Mediterranean FIR-linked SRR references. Exact Malta FIR polygon added; Greece southern/western FIR boundary added; Lebanon partial ICAO 2023 FIR arc reference. ISR & EGY remain partial. Not a complete or validated maritime SRR collection.",
     "sources": [
       "https://www.mcw.gov.cy/mcw/dca/AIS/ais.nsf/All/455773618044F4C9C2257C7E00234503/$file/LC_Amdt_A_2024_004_en.pdf",
       "https://e-aip.azurefd.net/2026-08-06-AIRAC/html/eAIP/LL-ENR-2.1-en-GB.html",
       "https://www.icao.int/MID/Documents/2014/ATM%20SG1/WP%207.pdf",
       "https://treaties.un.org/doc/Publication/UNTS/Volume%202981/v2981.pdf",
-      "https://www.imo.org/en/OurWork/Safety/Pages/GlobalSARPlan.aspx"
+      "https://www.imo.org/en/OurWork/Safety/Pages/GlobalSARPlan.aspx",
+      "https://www.transport.gov.mt/LM_AIP_2026_83_EFF_11_JUN_2026-2.pdf-f11582",
+      "https://hnhs.gr/wp-content/uploads/2024/12/2025_AnnualNM_EN.pdf",
+      "https://www.eurocontrol.int/archive_download/all/node/14170",
+      "https://www.icao.int/MID/Documents/2023/ATM%20SG9/WP5.pdf"
     ],
     "caution": "FIR/SRR links are supported by published agreements. This overlay is NOT a GISIS export. Arcs interpolated; Egypt source 2014; territorial/country-side boundaries omitted. Do not use to determine RCC responsibility.",
-    "source_review": "Israel AIP effective 2026-08-06; Cyprus AIP 2026-05-14; Egypt ICAO 2014 (not current); IMO GMDSS Manual 2024 provisional SRRs warning."
+    "source_review": "Israel AIP effective 2026-08-06; Cyprus AIP 2026-05-14; Egypt ICAO 2014 (not current); IMO GMDSS Manual 2024 provisional SRRs warning. Malta AIP 2026 ENR 2.1+GEN3.6; Greek Hydrographic Notice 14/2025+Greece ENR 2.1; ICAO 2023 Beirut FIR coordinates."
   },
   "features": [
     {
@@ -640,6 +644,274 @@
           [
             34.5,
             31.6
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "malta-fir-srr-2026",
+      "properties": {
+        "name": "Malta — Malta FIR / SRR reference",
+        "country": "Malta",
+        "region": "Malta",
+        "kind": "Published FIR coincident with SAR responsibility",
+        "color": "#e4a65b",
+        "completeness": "Closed published FIR polygon (five AIP vertices)",
+        "geometry_status": "source_fir_reference",
+        "source_date": "2026-06-11",
+        "source_url": "https://www.transport.gov.mt/LM_AIP_2026_83_EFF_11_JUN_2026-2.pdf-f11582",
+        "status": "PUBLISHED_FIR_COORDINATES_SRR_CO-INCIDENT_AIP_GEN36",
+        "notes": "Malta AIP ENR 2.1 defines LMMM FIR as 363000N0113000E, 363000N0190000E, 342000N0233500E, 342000N0113000E. AIP GEN 3.6 states Malta SRR coincides with Malta FIR. Direct AIP polygon; reference, not GISIS export."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              11.5,
+              36.5
+            ],
+            [
+              19,
+              36.5
+            ],
+            [
+              23.58333333,
+              34.33333333
+            ],
+            [
+              11.5,
+              34.33333333
+            ],
+            [
+              11.5,
+              36.5
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "greece-athinai-fir-med-offshore",
+      "properties": {
+        "name": "Greece — Athens FIR / maritime SRR offshore boundary (partial)",
+        "country": "Greece",
+        "region": "Athinai / JRCC Piraeus",
+        "kind": "Published FIR offshore reference",
+        "color": "#9b8ce6",
+        "completeness": "Offshore western/southern FIR boundary only; not closed SRR polygon",
+        "geometry_status": "partial_reference",
+        "source_date": "2025-01-01",
+        "status": "PUBLISHED_OFFSHORE_FIR_COORDINATES_PARTIAL",
+        "source_url": "https://hnhs.gr/wp-content/uploads/2024/12/2025_AnnualNM_EN.pdf",
+        "notes": "Greek Hydrographic Service Annual Notices to Mariners 14/2025 says maritime SRR is Athens FIR. Offshore vertices 3605N03000E, 3330N03000E, 3400N02710E, 3400N02410E, 3420N02335E, 3630N01900E, 4025N01900E from Greece AIP ENR 2.1 / Eurocontrol LSSIP 2022. Remaining land and disputed Aegean boundary omitted."
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            30,
+            36.08333333
+          ],
+          [
+            30,
+            33.5
+          ],
+          [
+            27.16666667,
+            34
+          ],
+          [
+            24.16666667,
+            34
+          ],
+          [
+            23.58333333,
+            34.33333333
+          ],
+          [
+            19,
+            36.5
+          ],
+          [
+            19,
+            40.41666667
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "lebanon-beirut-fir-med-offshore-2023",
+      "properties": {
+        "name": "Lebanon — Beirut FIR seaward reference (partial)",
+        "country": "Lebanon",
+        "region": "Beirut",
+        "kind": "FIR offshore reference (SAR status not authenticated)",
+        "color": "#49c5b5",
+        "completeness": "Part of offshore Lebanon FIR line with interpolated 45 NM arc; no enclosed area",
+        "geometry_status": "partial_reference",
+        "source_date": "2023-11-05",
+        "status": "2023_ICAO_OFFSHORE_45NM_ARC_APPROXIMATED",
+        "source_url": "https://www.icao.int/MID/Documents/2023/ATM%20SG9/WP5.pdf",
+        "notes": "ICAO MID ATM SG/9 WP5 specifies Beirut FIR offshore 343800N0354300E, 343310N0353548E, semicircular 45 NM arc centered 334827N0352910E to 330600N0345300E, with a coast-parallel 12 NM segment. This is approximate arc only; onshore / 12 NM coastline-parallel geometry omitted. FIR ≠ automatically validated maritime SRR."
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            35.71666667,
+            34.63333333
+          ],
+          [
+            35.59666667,
+            34.55277778
+          ],
+          [
+            35.52993073,
+            34.55611746
+          ],
+          [
+            35.46315657,
+            34.55675399
+          ],
+          [
+            35.39650935,
+            34.55332021
+          ],
+          [
+            35.33035755,
+            34.54583509
+          ],
+          [
+            35.2650667,
+            34.53434004
+          ],
+          [
+            35.20099719,
+            34.51889859
+          ],
+          [
+            35.13850215,
+            34.49959605
+          ],
+          [
+            35.07792533,
+            34.47653901
+          ],
+          [
+            35.01959913,
+            34.44985467
+          ],
+          [
+            34.96384264,
+            34.41969011
+          ],
+          [
+            34.91095984,
+            34.38621142
+          ],
+          [
+            34.86123788,
+            34.34960273
+          ],
+          [
+            34.81494547,
+            34.31006511
+          ],
+          [
+            34.77233143,
+            34.26781543
+          ],
+          [
+            34.73362336,
+            34.22308506
+          ],
+          [
+            34.69902648,
+            34.1761186
+          ],
+          [
+            34.66872257,
+            34.12717242
+          ],
+          [
+            34.64286914,
+            34.07651327
+          ],
+          [
+            34.62159869,
+            34.0244167
+          ],
+          [
+            34.60501812,
+            33.97116559
+          ],
+          [
+            34.59320839,
+            33.91704853
+          ],
+          [
+            34.58622423,
+            33.86235823
+          ],
+          [
+            34.58409404,
+            33.80738997
+          ],
+          [
+            34.58681993,
+            33.75243993
+          ],
+          [
+            34.59437795,
+            33.69780362
+          ],
+          [
+            34.60671838,
+            33.64377433
+          ],
+          [
+            34.6237662,
+            33.59064151
+          ],
+          [
+            34.64542167,
+            33.53868932
+          ],
+          [
+            34.67156104,
+            33.48819508
+          ],
+          [
+            34.70203736,
+            33.43942787
+          ],
+          [
+            34.73668139,
+            33.39264711
+          ],
+          [
+            34.7753026,
+            33.34810128
+          ],
+          [
+            34.81769033,
+            33.30602659
+          ],
+          [
+            34.86361488,
+            33.26664587
+          ],
+          [
+            34.91282887,
+            33.23016735
+          ],
+          [
+            34.88333333,
+            33.1
           ]
         ]
       }
