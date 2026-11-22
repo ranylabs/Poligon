@@ -2,7 +2,7 @@
   "type": "FeatureCollection",
   "name": "Eastern Mediterranean SAR/FIR reference — partial, not operational boundaries",
   "metadata": {
-    "version": "2026-11-22-reference-v4-israel-shaped-offshore-segment",
+    "version": "2026-11-22-reference-v5-israel-geodesic-arc-and-coast-shape",
     "datum": "WGS84",
     "coordinate_order": "longitude,latitude",
     "status": "Partially verified East Mediterranean FIR-linked SRR references. Exact Malta FIR polygon added; Greece southern/western FIR boundary added; Lebanon partial ICAO 2023 FIR arc reference. ISR & EGY remain partial. Not a complete or validated maritime SRR collection.",
@@ -388,10 +388,10 @@
         "geometry_status": "partial_reference_with_modelled_coastline",
         "color": "#33b3ff",
         "source_date": "2026-08-06",
-        "notes": "Israel AIP ENR 2.1 effective 06 August 2026: southern radius 46 NM about BGN DVOR 32°00'47.2N 034°52'31.3E; northern boundary from 32°43N 034°32E to 33°06N 034°35E described as 27 NM coastline-parallel. Intermediate points are modelled from GSHHG intermediate-resolution coastline and smoothly constrained to the AIP's published endpoints; AIP does not publish their exact path. Nearest-shore distances therefore are NOT uniformly 27NM. For GIS reference only. Screenshot-derived or Global SAR Hub proprietary coordinates were not used.",
+        "notes": "Israel AIP ENR 2.1 effective 06 August 2026: southern geodesic radius 46 NM on WGS84 about BGN DVOR 32°00'47.2N 034°52'31.3E; northern boundary from 32°43N 034°32E to 33°06N 034°35E described as 27 NM coastline-parallel. Intermediate points are modelled from GSHHG intermediate-resolution coastline and smoothly constrained to the AIP's published endpoints; AIP does not publish their exact path. Nearest-shore distances therefore are NOT uniformly 27NM. For GIS reference only. Screenshot-derived or Global SAR Hub proprietary coordinates were not used.",
         "source_url": "https://e-aip.azurefd.net/2026-08-06-AIRAC/html/eAIP/LL-ENR-2.1-en-GB.html",
         "status": "PUBLISHED_AIP_VERTICES_AND_GEODESIC_46NM_ARC_PLUS_GENERALIZED_NORTHERN_27NM_PARALLEL_SHAPE",
-        "confidence": "AIP exact vertices and BGN DVOR reference. The coastline-parallel portion is a cartographic approximation based on GSHHG intermediate coastline, preserving both published AIP endpoints. It is not an authenticated 27 NM geodesic offset or GISIS SRR polygon.",
+        "confidence": "AIP exact vertices and BGN DVOR reference. The coastline-parallel portion is a cartographic approximation based on GSHHG intermediate coastline, preserving both published AIP endpoints. It is not an authenticated 27 NM geodesic offset or GISIS SRR polygon. Southern circular arc upgraded to WGS84 ellipsoidal geodesic; published endpoints preserved (approximately 45.98 and 45.57 NM from BGN due AIP coordinate rounding).",
         "processing_notes": {
           "main_reference": "Israel AIP ENR 2.1 effective 2026-08-06",
           "coast_source": "GSHHG intermediate coastline via Basemap 2.0 (GSHHS i)",
@@ -399,7 +399,8 @@
           "model_points": 27,
           "source_resolution": "GSHHG intermediate approx 1:250,000; generalized coastline",
           "audited_utc": "2026-11-22",
-          "accuracy_warning": "Not an official digitized AIP 27NM offset nor IMO GISIS SRR geometry. Source anchors may not be exactly 27NM from modern coastline."
+          "accuracy_warning": "Not an official digitized AIP 27NM offset nor IMO GISIS SRR geometry. Source anchors may not be exactly 27NM from modern coastline.",
+          "southern_arc": "Recomputed 2026-11-22 with WGS84 ellipsoid (pyproj Geod): 47 interior arc points exactly 46 NM geodesic radius from published BGN DVOR location. Two AIP endpoint coordinates preserved without snapping."
         }
       },
       "geometry": {
@@ -414,192 +415,192 @@
             31.83333333
           ],
           [
-            33.9920277,
-            31.85494019
+            33.99364555,
+            31.85529147
           ],
           [
-            33.98681121,
-            31.87710367
+            33.98847684,
+            31.87747774
           ],
           [
-            33.98236448,
-            31.89938802
+            33.98407346,
+            31.899784
           ],
           [
-            33.97869194,
-            31.92177392
+            33.98043975,
+            31.922191
           ],
           [
-            33.97579732,
-            31.94424196
+            33.97757942,
+            31.94467938
           ],
           [
-            33.97368372,
-            31.96677264
+            33.9754955,
+            31.96722969
           ],
           [
-            33.97235353,
-            31.98934639
+            33.97419037,
+            31.98982244
           ],
           [
-            33.97180851,
-            32.0119436
+            33.97366573,
+            32.01243806
           ],
           [
-            33.97204969,
-            32.03454461
+            33.9739226,
+            32.03505696
           ],
           [
-            33.97307746,
-            32.05712975
+            33.97496134,
+            32.05765953
           ],
           [
-            33.9748915,
-            32.07967935
+            33.97678162,
+            32.08022615
           ],
           [
-            33.97749081,
-            32.10217375
+            33.97938245,
+            32.10273725
           ],
           [
-            33.9808737,
-            32.12459333
+            33.98276213,
+            32.12517325
           ],
           [
-            33.9850378,
-            32.14691852
+            33.9869183,
+            32.14751465
           ],
           [
-            33.98998005,
-            32.16912981
+            33.99184791,
+            32.16974201
           ],
           [
-            33.99569668,
-            32.19120779
+            33.99754723,
+            32.19183598
           ],
           [
-            34.00218327,
-            32.21313313
+            34.00401185,
+            32.2137773
           ],
           [
-            34.00943469,
-            32.23488665
+            34.01123668,
+            32.23554683
           ],
           [
-            34.01744513,
-            32.25644929
+            34.01921596,
+            32.2571256
           ],
           [
-            34.02620812,
-            32.27780213
+            34.02794327,
+            32.27849474
           ],
           [
-            34.0357165,
-            32.29892644
+            34.03741149,
+            32.29963559
           ],
           [
-            34.04596243,
-            32.31980367
+            34.04761286,
+            32.32052965
           ],
           [
-            34.05693742,
-            32.34041548
+            34.05853896,
+            32.34115865
           ],
           [
-            34.06863233,
-            32.36074375
+            34.07018071,
+            32.36150452
           ],
           [
-            34.08103734,
-            32.38077058
+            34.08252839,
+            32.38154943
           ],
           [
-            34.09414201,
-            32.40047834
+            34.09557164,
+            32.4012758
           ],
           [
-            34.10793524,
-            32.41984967
+            34.10929947,
+            32.42066633
           ],
           [
-            34.12240532,
-            32.43886749
+            34.12370025,
+            32.43970399
           ],
           [
-            34.13753992,
-            32.45751501
+            34.13876176,
+            32.45837206
           ],
           [
-            34.15332607,
-            32.47577579
+            34.15447116,
+            32.47665411
           ],
           [
-            34.16975024,
-            32.49363368
+            34.17081503,
+            32.49453407
           ],
           [
-            34.18679829,
-            32.5110729
+            34.18777935,
+            32.51199621
           ],
           [
-            34.20445549,
-            32.52807803
+            34.20534953,
+            32.52902514
           ],
           [
-            34.22270658,
-            32.54463401
+            34.22351044,
+            32.54560585
           ],
           [
-            34.24153571,
-            32.56072619
+            34.24224637,
+            32.56172372
           ],
           [
-            34.26092652,
-            32.5763403
+            34.26154112,
+            32.57736454
           ],
           [
-            34.28086211,
-            32.59146252
+            34.28137792,
+            32.5925145
           ],
           [
-            34.30132507,
-            32.60607942
+            34.30173954,
+            32.60716022
           ],
           [
-            34.32229751,
-            32.62017803
+            34.32260822,
+            32.62128876
           ],
           [
-            34.34376105,
-            32.63374583
+            34.34396577,
+            32.63488762
           ],
           [
-            34.36569684,
-            32.64677078
+            34.3657935,
+            32.64794478
           ],
           [
-            34.3880856,
-            32.6592413
+            34.3880723,
+            32.66044869
           ],
           [
-            34.41090761,
-            32.6711463
+            34.41078263,
+            32.67238828
           ],
           [
-            34.43414275,
-            32.68247519
+            34.43390454,
+            32.68375296
           ],
           [
-            34.45777051,
-            32.6932179
+            34.45741772,
+            32.69453269
           ],
           [
-            34.48176999,
-            32.70336485
+            34.48130144,
+            32.70471789
           ],
           [
-            34.50611996,
-            32.71290701
+            34.50553465,
+            32.71429954
           ],
           [
             34.53333333,
