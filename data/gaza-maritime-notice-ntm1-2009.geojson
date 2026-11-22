@@ -1,0 +1,58 @@
+{
+  "type": "FeatureCollection",
+  "name": "Gaza maritime navigational-warning reference — NOT SAR region",
+  "metadata": {
+    "accuracy": "Coordinates exactly as transmitted in publicly archived RCC Haifa NAVTEX; order reorganized into a non-self-intersecting ring (NW, SW along sea edge).",
+    "basis": "NAVTEX P/PA06, RCC Haifa, citing NTM 1/2009. Broadcast dated 03 Nov 2025; public archive receipt Sep-Nov 2026.",
+    "operational_note": "A reported restricted maritime area, not a FIR, SRR, recognized state maritime boundary or evidence of RCC coordination responsibility.",
+    "latest_status": "Not validated against live NAVTEX; verify whether warning remains active before use.",
+    "source_url": "https://navtex.online/messages/33759",
+    "coordinate_order": "longitude,latitude",
+    "datum": "WGS84",
+    "rendering": "Separate optional amber overlay; never merged into Israel SAR/FIR boundary"
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "gaza-navtex-p-pa06-2009",
+      "properties": {
+        "name": "Gaza Maritime Area — NAVTEX notice (NOT SAR boundary)",
+        "country": "Gaza",
+        "kind": "Navigational notice reference; separate from SRR",
+        "color": "#edb15c",
+        "geometry_status": "navtex_reference_not_SRR",
+        "completeness": "4 exact NAVTEX position anchors in noncrossing polygon",
+        "source_date": "2025-11-03",
+        "source_url": "https://navtex.online/messages/33759",
+        "notes": "RCC Haifa NAVTEX PA06 reproduces Notice to Mariners NTM 1/2009. Coordinates listed: 31°35.71'N 034°29.46'E; 31°46.8'N 034°10.01'E; 31°19.39'N 034°13.11'E; 31°33.73'N 033°56.68'E. Feature ring is reordered geographically to avoid a bow-tie. This notice concerns a maritime restricted area, not Israel's FIR/SRR boundary. Check active warning before operational use."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              34.491,
+              31.595166667
+            ],
+            [
+              34.166833333,
+              31.78
+            ],
+            [
+              33.944666667,
+              31.562166667
+            ],
+            [
+              34.2185,
+              31.323166667
+            ],
+            [
+              34.491,
+              31.595166667
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
