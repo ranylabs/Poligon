@@ -1,0 +1,369 @@
+{
+  "type": "FeatureCollection",
+  "name": "Israel coastal SAR depiction — Gaza L-zone kink (visual hypothesis)",
+  "metadata": {
+    "date": "2026-11-22",
+    "datum": "WGS84",
+    "coordinate_order": "longitude,latitude",
+    "classification": "UNVERIFIED CARTOGRAPHIC DEPICTION — NOT OFFICIAL MARITIME SRR",
+    "source1": "Israel AIP ENR 2.1: Tel Aviv FIR western geodesic arc and northern sector, 2026-08-06",
+    "source1_url": "https://e-aip.azurefd.net/2026-08-06-AIRAC/html/eAIP/LL-ENR-2.1-en-GB.html",
+    "source2": "US NGA Sailing Directions Publication 140, 2025 edition corrected 2026, Israel, Gaza Maritime Security Area L; exact 3 positions L2-L4",
+    "source2_url": "https://msi.nga.mil/api/publications/download?key=16694492%2FSFH00000%2FPub140bk.pdf",
+    "disclaimer": "Composite of two DISTINCT jurisdictions (FIR vs Gaza maritime security zone) for visual comparison. Their geographical merger has NOT been verified as a real SAR boundary; in particular do NOT assign RCC jurisdiction from it. This dataset is an experimental cartographic hypothesis, not copied from Global SAR Hub."
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "israel-gaza-maritime-visual-hypothesis",
+      "properties": {
+        "name": "Israel southern offshore coast-context illustration (NOT official SRR)",
+        "country": "Israel",
+        "geometry_status": "illustrative_composite_not_official_SRR",
+        "completeness": "Open line: NGA Gaza Area L coordinates + 2026 Tel Aviv FIR offshore arc and north reference",
+        "source_date": "2026-11-22",
+        "status": "ILLUSTRATIVE_ONLY_NO_SAR_AUTHORITY",
+        "notes": "This line was independently constructed with published US NGA Gaza Area L maritime-security positions L4, L3, L2 and published AIP Tel Aviv FIR 31°50'N 034°00'E geodesic arc and northern coast-parallel reference. NGA Area L is NOT a SAR boundary. Does not replace actual GISIS/JRCC SRR polygon. The Global SAR Hub screenshot was used only for visual comparison, without copying site data.",
+        "outline": [
+          {
+            "name": "L4 Gaza coast north",
+            "longitude": 34.491,
+            "latitude": 31.59516667
+          },
+          {
+            "name": "L3 Area L northern seaward point",
+            "longitude": 34.16683333,
+            "latitude": 31.78
+          },
+          {
+            "name": "L2 Area L southern seaward point",
+            "longitude": 33.94466667,
+            "latitude": 31.56216667
+          }
+        ],
+        "color": "#6de0de"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            34.491,
+            31.59516667
+          ],
+          [
+            34.16683333,
+            31.78
+          ],
+          [
+            33.94466667,
+            31.56216667
+          ],
+          [
+            34,
+            31.83333333
+          ],
+          [
+            33.99364555,
+            31.85529147
+          ],
+          [
+            33.98847684,
+            31.87747774
+          ],
+          [
+            33.98407346,
+            31.899784
+          ],
+          [
+            33.98043975,
+            31.922191
+          ],
+          [
+            33.97757942,
+            31.94467938
+          ],
+          [
+            33.9754955,
+            31.96722969
+          ],
+          [
+            33.97419037,
+            31.98982244
+          ],
+          [
+            33.97366573,
+            32.01243806
+          ],
+          [
+            33.9739226,
+            32.03505696
+          ],
+          [
+            33.97496134,
+            32.05765953
+          ],
+          [
+            33.97678162,
+            32.08022615
+          ],
+          [
+            33.97938245,
+            32.10273725
+          ],
+          [
+            33.98276213,
+            32.12517325
+          ],
+          [
+            33.9869183,
+            32.14751465
+          ],
+          [
+            33.99184791,
+            32.16974201
+          ],
+          [
+            33.99754723,
+            32.19183598
+          ],
+          [
+            34.00401185,
+            32.2137773
+          ],
+          [
+            34.01123668,
+            32.23554683
+          ],
+          [
+            34.01921596,
+            32.2571256
+          ],
+          [
+            34.02794327,
+            32.27849474
+          ],
+          [
+            34.03741149,
+            32.29963559
+          ],
+          [
+            34.04761286,
+            32.32052965
+          ],
+          [
+            34.05853896,
+            32.34115865
+          ],
+          [
+            34.07018071,
+            32.36150452
+          ],
+          [
+            34.08252839,
+            32.38154943
+          ],
+          [
+            34.09557164,
+            32.4012758
+          ],
+          [
+            34.10929947,
+            32.42066633
+          ],
+          [
+            34.12370025,
+            32.43970399
+          ],
+          [
+            34.13876176,
+            32.45837206
+          ],
+          [
+            34.15447116,
+            32.47665411
+          ],
+          [
+            34.17081503,
+            32.49453407
+          ],
+          [
+            34.18777935,
+            32.51199621
+          ],
+          [
+            34.20534953,
+            32.52902514
+          ],
+          [
+            34.22351044,
+            32.54560585
+          ],
+          [
+            34.24224637,
+            32.56172372
+          ],
+          [
+            34.26154112,
+            32.57736454
+          ],
+          [
+            34.28137792,
+            32.5925145
+          ],
+          [
+            34.30173954,
+            32.60716022
+          ],
+          [
+            34.32260822,
+            32.62128876
+          ],
+          [
+            34.34396577,
+            32.63488762
+          ],
+          [
+            34.3657935,
+            32.64794478
+          ],
+          [
+            34.3880723,
+            32.66044869
+          ],
+          [
+            34.41078263,
+            32.67238828
+          ],
+          [
+            34.43390454,
+            32.68375296
+          ],
+          [
+            34.45741772,
+            32.69453269
+          ],
+          [
+            34.48130144,
+            32.70471789
+          ],
+          [
+            34.50553465,
+            32.71429954
+          ],
+          [
+            34.53333333,
+            32.71666667
+          ],
+          [
+            34.53270366,
+            32.73141026
+          ],
+          [
+            34.53207398,
+            32.74615385
+          ],
+          [
+            34.53144431,
+            32.76089744
+          ],
+          [
+            34.53152903,
+            32.77564103
+          ],
+          [
+            34.53234411,
+            32.79038462
+          ],
+          [
+            34.53315919,
+            32.80512821
+          ],
+          [
+            34.53397426,
+            32.8198718
+          ],
+          [
+            34.53359977,
+            32.83461539
+          ],
+          [
+            34.5312341,
+            32.84935898
+          ],
+          [
+            34.52981685,
+            32.86410257
+          ],
+          [
+            34.52934675,
+            32.87884616
+          ],
+          [
+            34.52887665,
+            32.89358975
+          ],
+          [
+            34.52840655,
+            32.90833334
+          ],
+          [
+            34.52793645,
+            32.92307692
+          ],
+          [
+            34.52746634,
+            32.93782051
+          ],
+          [
+            34.5273875,
+            32.9525641
+          ],
+          [
+            34.53099036,
+            32.96730769
+          ],
+          [
+            34.53459322,
+            32.98205128
+          ],
+          [
+            34.53819608,
+            32.99679487
+          ],
+          [
+            34.54179894,
+            33.01153846
+          ],
+          [
+            34.5454018,
+            33.02628205
+          ],
+          [
+            34.54939122,
+            33.04102564
+          ],
+          [
+            34.55787675,
+            33.05576923
+          ],
+          [
+            34.56636227,
+            33.07051282
+          ],
+          [
+            34.5748478,
+            33.08525641
+          ],
+          [
+            34.58333333,
+            33.1
+          ],
+          [
+            35.1,
+            33.1
+          ]
+        ]
+      }
+    }
+  ]
+}
