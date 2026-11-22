@@ -75,6 +75,36 @@ For a valid non-self-crossing GeoJSON polygon, the geographic ring is ordered 1�
 
 **Follow-up for exact match:** obtain a current authority-provided Israel maritime SAR polygon / GML from IMO GISIS or JRCC, including any southern coastal exception. Validate origin, effective date and whether the notch is a SAR boundary before replacing a region dataset.
 
+## Israel southern offshore display: new NGA+AIP visual reconstruction (2026-11-22)
+
+Poligon ships **two selectable views** for Israel:
+
+1. **Published AIP FIR western boundary** — `srr-eastmed-reference.geojson`, original open FIR reference line, containing the official AIP 31°18′N 034°13′E / 31°50′N 034°00′E section, the BGN 46 NM arc, and an interpolated coast-parallel northern segment.
+2. **Gaza coastal-context profile (illustrative; default view)** — `israel-gaza-coastal-composite-illustrative.geojson`. This open LineString connects published NGA Gaza security area **L4 → L3 → L2**, then published **31°50′N 034°00′E** AIP reference through the FIR offshore arc and northern segment.
+
+### NGA Gaza Area L coordinates used (WGS84)
+
+| Position | Latitude | Longitude |
+|---|---|---|
+| L4 | 31°35′42.6″N | 034°29′27.6″E |
+| L3 | 31°46′48.0″N | 034°10′00.6″E |
+| L2 | 31°33′43.8″N | 033°56′40.8″E |
+| Connection to AIP FIR | 31°50′00″N | 034°00′00″E |
+
+Primary source: [US NGA Sailing Directions Pub. 140, Israel, security areas K/L/M](https://msi.nga.mil/api/publications/download?key=16694492%2FSFH00000%2FPub140bk.pdf). US NGA publication explicitly says **no copyright claimed under U.S. Title 17**.
+
+The locations are independently sourced from US government nautical publications and Israel AIP. We **did not extract, reproduce or scrape** Global SAR Hub's proprietary map. The website's own [Terms and Conditions](https://www.globalsarhub.com/terms-and-conditions.html) forbid reusing or extracting those datasets without permission.
+
+**Critical:** NGA Area L is a **maritime security area, NOT SAR Region**, and the connection between the NGA security vertices and Israel AIP FIR is solely a **cartographic hypothesis for visual comparison**, not an established or ratified SAR jurisdiction geometry. The default illustrative line is explicitly labelled as such. Never use it to select a coordinating RCC. An officially certified maritime SRR line/GML remains outstanding.
+
+### User-visible controls
+
+- Israel is checked and the East Mediterranean layer enabled automatically at application opening.
+- Under Israel's country row, select **Gaza coastal profile · illustrative (NGA + AIP)** or **Published Tel Aviv FIR line · AIP**.
+- Switching changes the displayed line without changing operator-created geometry, measurements, or the stored source datasets.
+- Country visibility and colors remain independently selectable.
+- The formerly separate, distracting Gaza NAVTEX display checkbox was removed from the interface. The source-specific historical `gaza-maritime-notice-ntm1-2009.geojson` can still be inspected in GitHub.
+
 ## Additional worldwide coverage (not a global atlas)
 
 Poligon offers optional **on-demand** public ArcGIS GeoJSON layers, kept separate from the bundled data:
