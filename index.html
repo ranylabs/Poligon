@@ -16,6 +16,12 @@
 <button onclick="zoomSrrReference()">Zoom East Mediterranean</button>
 <button onclick="exportSrrReference()">Export regional GeoJSON (with colors)</button>
 <hr style="border:0;border-top:1px solid #3f586a;margin:10px 0">
+<h3>Additional Mediterranean official sources</h3>
+<p class="muted">France: Shom publishes open-licensed maritime SAR polygons (2019 source, 2026 catalogue). Italy: the Coast Guard's national maritime SAR plan defines its SRR. Neither is bundled as an unverified polygon.</p>
+<a href="https://www.data.gouv.fr/datasets/zones-de-recherches-et-secours-sar" target="_blank" rel="noopener noreferrer" style="color:#8cdbff">France · Shom SAR data (download GML/SHP)</a><br>
+<a href="https://www.mit.gov.it/sites/default/files/media/normativa/2021-03/PIANO%20SAR%20MARITTIMO%20NAZIONALE%20Ed.%202020_rev.pdf" target="_blank" rel="noopener noreferrer" style="color:#8cdbff">Italy · official maritime SAR plan</a>
+<p class="muted">Use "Import IMO GISIS GML" to add validated official polygon data. SAR boundaries can differ from airspace FIR boundaries.</p>
+<hr style="border:0;border-top:1px solid #3f586a;margin:10px 0">
 <h3>World coverage — available partial sources</h3>
 <label><input type="checkbox" id="srrPacificToggle" onchange="toggleGlobalSrr('pacific',this.checked)"> South Pacific SRRs (AMSA / IMO dataset)</label><br>
 <label><input type="checkbox" id="srrCanadaToggle" onchange="toggleGlobalSrr('canada',this.checked)"> Canadian SAR regions (ArcGIS public dataset)</label>
