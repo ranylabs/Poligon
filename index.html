@@ -13,8 +13,11 @@
 <hr style="border:0;border-top:1px solid #3f586a;margin:10px 0">
 <h3>Verified external layers</h3>
 <button onclick="document.getElementById('srrImport').click()">Import GeoJSON</button>
+<button onclick="document.getElementById('srrGmlImport').click()">Import IMO GISIS GML</button>
+<input type="file" id="srrGmlImport" accept=".gml,.xml,application/gml+xml,application/xml,text/xml" hidden onchange="importSrrGML(event)">
 <input type="file" id="srrImport" accept=".geojson,.json,application/geo+json,application/json" hidden onchange="importSrrGeoJSON(event)">
 <button onclick="clearImportedSrr()">Remove imported</button>
+<button onclick="exportImportedSrr()">Export imported GeoJSON</button>
 <div id="importedSrrColors" class="muted"></div>
 <p class="muted"><a style="color:#91d9ff" href="https://www.imo.org/en/ourwork/safety/pages/globalsarplan.aspx" target="_blank" rel="noopener">IMO GISIS Global SAR Plan — authoritative verification</a></p>
 <div id="srrStatus" class="muted">Regional layer off. Line colors are stored in this browser.</div>
@@ -313,5 +316,71 @@ function clearImportedSrr(){
  importedSrrLayer=null;importedSrrData=null;
  $('importedSrrColors').innerHTML='';
  $('srrStatus').textContent='Imported layer removed.';
+}
+
+/* IMO COMSAR.1/Circ.61 compliant gml:MultiSurface / Polygon / posList importer.
+   IMO posList uses longitude then latitude; never silently reverse axes. */
+function gmlRingsToFeatureCollection(xml,filename){
+ const doc=new DOMParser().parseFromString(xml,'application/xml');
+ if(doc.getElementsByTagName('parsererror').length||doc.getElementsByTagNameNS('*','parsererror').length)
+   throw Error('Invalid XML/GML');
+ const polys=Array.from(doc.getElementsByTagNameNS('*','Polygon'));
+ if(!polys.length)throw Error('No GML Polygon elements found');
+ if(polys.length>300)throw Error('Too many polygons (300 maximum)');
+ const parseRing=node=>{
+  if(!node)throw Error('Missing polygon ring');
+  const el=node.getElementsByTagNameNS('*','posList')[0];
+  let coords=[];
+  if(el){
+   const data=el.textContent.trim().split(/[\s,]+/).filter(Boolean).map(Number);
+   const dimensional=Number(el.getAttribute('srsDimension')||node.getAttribute('srsDimension')||2);
+   if(dimensional!==2||data.length<6||data.length%2)throw Error('Expected 2D lon/lat GML posList');
+   for(let i=0;i<data.length;i+=2)coords.push([data[i],data[i+1]]);
+  }else{
+   const pos=Array.from(node.getElementsByTagNameNS('*','pos'));
+   for(const p of pos){
+    const nums=p.textContent.trim().split(/[\s,]+/).map(Number);
+    if(nums.length!==2)throw Error('Expected longitude latitude pos pair');
+    coords.push(nums);
+   }
+  }
+  if(coords.length<3||coords.some(p=>!Number.isFinite(p[0])||!Number.isFinite(p[1])||Math.abs(p[0])>180||Math.abs(p[1])>90))
+    throw Error('Invalid polygon geographic coordinates');
+  if(coords[0][0]!==coords.at(-1)[0]||coords[0][1]!==coords.at(-1)[1])coords.push([...coords[0]]);
+  if(coords.length<4)throw Error('Polygon ring requires 3 positions');
+  return coords;
+ };
+ const features=polys.map((poly,i)=>{
+  const exterior=poly.getElementsByTagNameNS('*','exterior')[0]||poly.getElementsByTagNameNS('*','outerBoundaryIs')[0];
+  const interiors=Array.from(poly.getElementsByTagNameNS('*','interior'));
+  const rings=[parseRing(exterior),...interiors.map(parseRing)];
+  const desc=poly.getElementsByTagNameNS('*','description')[0]?.textContent?.trim();
+  const id=poly.getAttribute('gml:id')||poly.getAttribute('id')||('RCC_'+(i+1));
+  return {type:'Feature',id:'gml-'+id,properties:{
+   name:desc||id,geometry_status:'source_file_import_not_independently_verified',
+   notes:'Imported from '+filename+'. Coordinates lon/lat per IMO COMSAR.1/Circ.61. Confirm current authority and datum before operational use.',
+   color:'#a1c7ff'},geometry:{type:'Polygon',coordinates:rings}};
+ });
+ return {type:'FeatureCollection',name:filename,features};
+}
+async function importSrrGML(event){
+ const file=event.target.files&&event.target.files[0];if(!file)return;
+ try{
+  if(file.size>20000000)throw Error('GML file over 20 MB limit');
+  const data=gmlRingsToFeatureCollection(await file.text(),file.name);
+  const layer=makeSrrLayer(data,'imported');
+  if(importedSrrLayer)map.removeLayer(importedSrrLayer);
+  importedSrrLayer=layer.addTo(map);importedSrrData=data;
+  drawSrrColorInputs('imported',data.features,'importedSrrColors');
+  if(layer.getBounds().isValid())map.fitBounds(layer.getBounds(),{padding:[40,40]});
+  $('srrStatus').textContent='Imported '+data.features.length+' GML polygons from '+file.name+'; validate GISIS source and currency.';
+ }catch(e){$('srrStatus').textContent='GML import failed: '+e.message}
+ finally{event.target.value=''}
+}
+function exportImportedSrr(){
+ if(!importedSrrData){$('srrStatus').textContent='Import a GeoJSON or GML file first.';return}
+ const data=JSON.parse(JSON.stringify(importedSrrData));
+ if(data.features)for(const f of data.features){f.properties=f.properties||{};f.properties.display_color=srrFeatureColor(f,'imported')}
+ download('Poligon-imported-SRR-reference.geojson',JSON.stringify(data,null,2),'application/geo+json');
 }
 </script></body></html>
