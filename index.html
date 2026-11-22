@@ -90,7 +90,8 @@ section .muted,.tool-hint{color:var(--muted);line-height:1.55}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #5fe2ef;outline-offset:2px}
 @media(max-width:900px){aside{width:365px;min-width:330px}#hud{left:380px}}
 @media(max-width:750px){#app{height:100dvh;flex-direction:column}aside{width:100%;height:54vh;min-width:0;flex:none}#map{height:46vh;flex:1}#hud{left:9px;bottom:10px;max-width:calc(100% - 18px);font-size:10px}#mapProjectSummary{top:8px;left:49px;max-width:65%}.app-brand{top:0}}
-</style></head><body><div id="app"><aside aria-label="Poligon controls"><div class="app-brand">
+.map-reference-warning{position:absolute;z-index:960;top:47px;left:60px;max-width:min(70%,510px);display:none;background:#372713ed;color:#ffe4b5;border:1px solid #c39251;box-shadow:0 3px 12px #070e1555;border-radius:6px;padding:7px 10px;font-weight:750;letter-spacing:.025em;font-size:10.5px;pointer-events:none}
+@media(max-width:750px){.map-reference-warning{top:40px;left:50px;font-size:9px;max-width:70%}}</style></head><body><div id="app"><aside aria-label="Poligon controls"><div class="app-brand">
   <div class="brand-logo" aria-hidden="true">P<span>·</span></div>
   <div class="brand-copy"><div class="brand-eyebrow">MARITIME OPERATIONS</div><div class="brand-title">POLIGON <span>Mapper</span></div><div class="brand-subtitle">Geospatial planning workspace</div></div>
   <span class="brand-version">BETA</span>
@@ -115,8 +116,8 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 <button onclick="zoomSrrReference()">Zoom East Mediterranean</button>
 <button onclick="zoomIsraelGaza()">Zoom Israel / Gaza</button>
 <div style="margin-top:10px;border-top:1px solid #3f586a;padding-top:9px">
-<p class="muted"><b>Israel coastline display:</b> select the published FIR line or a visual coastal-context reconstruction. The contextual reconstruction uses NGA Gaza Area L security-zone points, not an approved SAR polygon.</p>
-<div id="israelReconstructionStatus" class="muted">Visual coast profile is illustrative, not operationally verified.</div>
+<p class="muted"><b>Israel coastline display:</b> choose the original AIP FIR line or an illustrative shaded coastal area. The area uses AIP offshore coordinates, NGA Area 605 positions near Gaza, and open shoreline data. It is NOT an approved maritime SAR boundary.</p>
+<div id="israelReconstructionStatus" class="muted">Coastline-filled area is illustrative, not an approved maritime SRR.</div>
 </div>
 <button onclick="exportSrrReference()">Export regional GeoJSON (with colors)</button>
 <hr style="border:0;border-top:1px solid #3f586a;margin:10px 0">
@@ -143,7 +144,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 <div id="importedSrrColors" class="muted"></div>
 <p class="muted"><a style="color:#91d9ff" href="https://www.imo.org/en/ourwork/safety/pages/globalsarplan.aspx" target="_blank" rel="noopener">IMO GISIS Global SAR Plan — authoritative verification</a></p>
 <div id="srrStatus" class="muted">Regional layer off. Line colors are stored in this browser.</div>
-<div id="globalSrrStatus" class="muted"></div></section></aside><div id="map"><div id="mapProjectSummary" aria-live="polite"><strong>0</strong> objects &nbsp;·&nbsp; <strong>0</strong> measurements saved</div><div id="measureHud"></div><div id="measureContextMenu" role="menu" aria-label="Measurement actions"><div class="menu-title">MEASUREMENT ACTIONS</div><button id="measureMenuFinish" onclick="finishMeasure()">Finish &amp; save · Enter</button><button id="measureMenuUndo" onclick="undoMeasurePoint()">Undo last point · Backspace</button><button class="danger" onclick="cancelMeasure()">Cancel measurement · Esc</button></div></div></div><div id="hud">Move mouse over map</div><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script><script>
+<div id="globalSrrStatus" class="muted"></div></section></aside><div id="map"><div id="mapProjectSummary" aria-live="polite"><strong>0</strong> objects &nbsp;·&nbsp; <strong>0</strong> measurements saved</div><div id="israelIllustrationMapWarning" class="map-reference-warning" role="status">ISRAEL · ILLUSTRATIVE AREA — NOT AN OFFICIAL SAR BOUNDARY</div><div id="measureHud"></div><div id="measureContextMenu" role="menu" aria-label="Measurement actions"><div class="menu-title">MEASUREMENT ACTIONS</div><button id="measureMenuFinish" onclick="finishMeasure()">Finish &amp; save · Enter</button><button id="measureMenuUndo" onclick="undoMeasurePoint()">Undo last point · Backspace</button><button class="danger" onclick="cancelMeasure()">Cancel measurement · Esc</button></div></div></div><div id="hud">Move mouse over map</div><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script><script>
 const $=id=>document.getElementById(id),KEY='poligon-v1',map=L.map('map').setView([32.5,34.5],8),group=L.layerGroup().addTo(map);
 const tiles=(name,z)=>L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/'+name+'/MapServer/tile/{z}/{y}/{x}',{maxZoom:z,attribution:'Tiles © Esri'});
 const street=tiles('World_Street_Map',19).addTo(map),ocean=tiles('Ocean/World_Ocean_Base',16),topo=tiles('World_Topo_Map',19),sat=tiles('World_Imagery',19),seamarks=L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png',{attribution:'© OpenSeaMap',maxZoom:18}).addTo(map);
@@ -535,10 +536,12 @@ function syncSrrRegionLayers(){
   if(shouldDisplay)contextualIsraelLayer.addTo(map);
   else map.removeLayer(contextualIsraelLayer);
  }
+ const warning=$('israelIllustrationMapWarning');
+ if(warning)warning.style.display=($('srrToggle')?.checked&&contextIsraelIsActive())?'block':'none';
  const note=$('israelReconstructionStatus');
  if(note){
   if(israelBorderVariant==='context')note.textContent=
-   'Visual reconstruction: NGA Gaza Area L points L2–L4 connected to the AIP FIR offshore arc. NOT an approved SRR boundary.';
+   'Illustrative coastal polygon: AIP offshore arc, NGA Area 605 points and open coastline. NOT an approved SRR boundary.';
   else note.textContent='Original published Tel Aviv FIR western reference (AIP ENR 2.1), not a verified GISIS SRR polygon.';
  }
  updateSrrStatus();
@@ -547,7 +550,7 @@ function updateSrrStatus(){
  if(!regionalSrrData)return;
  const active=regionalSrrData.features.filter(srrRegionFeatureEnabled).map(f=>f.properties?.country||f.properties?.name);
  if($('srrStatus'))$('srrStatus').textContent=(!$('srrToggle').checked?'Regional layer hidden. ':'Visible: ')+
-   (active.join(', ')||'None')+'. Israel mode: '+(israelBorderVariant==='context'?'illustrative NGA+AIP coastal profile (NOT verified SRR)':'AIP FIR western line')+'. Boundaries are source references; some are partial.';
+   (active.join(', ')||'None')+'. Israel mode: '+(israelBorderVariant==='context'?'illustrative shaded coastal area (NOT certified SRR)':'AIP FIR western line')+'. Boundaries are source references; some are partial.';
 }
 
 if(!map.getPane('srrReferencePane'))map.createPane('srrReferencePane');
@@ -591,7 +594,7 @@ function saveSrrColor(scope,id,value){
    if(hiddenLayer&&hiddenLayer.feature&&typeof hiddenLayer.setStyle==='function')hiddenLayer.setStyle(srrStyle(hiddenLayer.feature,scope));
    if(id==='israel-telaviv-fir-west-2026'&&contextualIsraelLayer&&regionalSrrData){
      const official=regionalSrrData.features.find(f=>f.properties?.country==='Israel');
-     if(official)contextualIsraelLayer.setStyle({...srrStyle(official,'eastmed'),dashArray:'7 4'});
+     if(official)contextualIsraelLayer.setStyle({...srrStyle(official,'eastmed'),dashArray:'7 4',fillOpacity:.16,weight:2.6});
    }
  }else if(layer)layer.eachLayer(l=>{
    if(l.feature&&srrIdentity(l.feature)===id&&typeof l.setStyle==='function'){
@@ -630,7 +633,7 @@ function drawSrrColorInputs(scope,features,targetId){
     row.style.flexWrap='wrap';
     const select=document.createElement('select');
     select.style.cssText='width:100%;font-size:11px;margin:4px 0';
-    select.innerHTML='<option value="context">Gaza coastal profile · illustrative (NGA + AIP)</option><option value="aip">Published Tel Aviv FIR line · AIP</option>';
+    select.innerHTML='<option value="context">Coastal area to shoreline · illustrative</option><option value="aip">Published Tel Aviv FIR line · AIP</option>';
     select.value=israelBorderVariant;
     select.addEventListener('change',()=>selectIsraelBorderVariant(select.value));
     row.appendChild(select);
@@ -679,6 +682,7 @@ async function toggleSrrReference(visible){
  if(!visible){
   if(srrReferenceLayer)map.removeLayer(srrReferenceLayer);
   if(contextualIsraelLayer)map.removeLayer(contextualIsraelLayer);
+  const warning=$('israelIllustrationMapWarning');if(warning)warning.style.display='none';
   status.textContent='Eastern Mediterranean reference hidden.';return
  }
  try{
@@ -688,17 +692,17 @@ async function toggleSrrReference(visible){
     regionalSrrData=data;
     srrReferenceLayer=makeSrrLayer(data,'eastmed');
     try{
-      const coastalData=await getSrrJSON('./data/israel-gaza-coastal-composite-illustrative.geojson?v=20261122-nga-l');
+      const coastalData=await getSrrJSON('./data/israel-gaza-coastal-composite-illustrative.geojson?v=20261122-coast-polygon-v2');
       contextualIsraelSource=coastalData;
       const official=data.features.find(f=>f.properties?.country==='Israel');
       contextualIsraelLayer=L.geoJSON(coastalData,{
          pane:'srrReferencePane',
-         style:()=>({...srrStyle(official,'eastmed'),dashArray:'7 4'}),
+         style:()=>({...srrStyle(official,'eastmed'),dashArray:'7 4',fillOpacity:.16,weight:2.6}),
          onEachFeature:(feature,layer)=>{
            bindSelectable(layer);
            bindControlledPopup(layer,
-             '<b>Israel coastal-context illustration</b><br>NGA Gaza Area L + AIP offshore reference'+
-             '<br><b>NOT verified as an SRR boundary</b>');
+             '<b>Israel illustrative coastal area</b><br>Offshore: AIP FIR; Gaza: NGA Area 605; land edge: geoBoundaries/OSM'+
+             '<br><b>NOT an approved SAR boundary</b>');
          }
       });
     }catch(error){
