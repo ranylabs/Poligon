@@ -393,7 +393,7 @@ details[open]>.accordion-trigger .accordion-chevron{transform:rotate(225deg) tra
       <span class="accordion-title"><span class="tool-index">04</span><span>Measure distance · NM / °T</span></span>
       <span class="accordion-chevron" aria-hidden="true"></span>
     </summary>
-    <div class="accordion-content"><p class="muted">Click map, lines or existing points. Move mouse to see live leg distance, total distance and initial true bearing (°T). Right-click the map for Finish / Undo / Cancel. Keyboard: Enter, Backspace, Esc.</p><button class="primary-action amber-action" id="measurebtn" onclick="toggleMode('measure')">⌁ &nbsp;Start measuring</button><button class="secondary-action" onclick="finishMeasure()">Finish & save</button><button class="quiet-action" onclick="cancelMeasure()">Cancel</button><div id="measureInfo" class="muted" aria-live="polite"></div><p class="tool-hint">Finished measurements appear above under <b>Saved measurements</b> with an amber label.</p></div>
+    <div class="accordion-content"><p class="muted">Click map, lines or existing points. Move mouse to see live leg distance, total distance and initial true bearing (°T). Right-click the map for Finish / Undo / Cancel. Keyboard: Enter, Backspace, Esc.</p><button class="primary-action amber-action" id="measurebtn" onclick="toggleMode('measure')">⌁ &nbsp;Start measuring</button><button class="secondary-action" onclick="finishMeasure()">Finish & save</button><button class="quiet-action" onclick="cancelMeasure()">Cancel</button><div id="measureInfo" class="muted" aria-live="polite"></div><p class="tool-hint">Finished measurements appear above under <b>Saved measurements</b> with an amber label. To move a saved measurement, choose <b>Edit handles</b> in its Workspace card.</p></div>
   </details><details class="accordion-tool tool-panel" id="panel-weather">
     <summary class="accordion-trigger" aria-label="Expand or collapse Marine weather">
       <span class="accordion-title"><span class="tool-index">05</span><span>Marine weather</span></span>
@@ -899,6 +899,7 @@ function onMeasurementRemoved(index){
 }
 function archiveMeasure(index){
  const m=measures[index];if(!m)return;
+ if(measurementEdit?.index===index)cancelMeasurementEdit(false);
  m.archived=true;m.archivedAt=new Date().toISOString();m.visible=false;m.autoLoad=false;
  save();draw();notifyWorkspace(m.name+' moved to History');
 }
@@ -924,6 +925,7 @@ function removeObjectForever(index){
 function removeMeasureForever(index){
  const item=measures[index];if(!item)return;
  if(!confirm('Permanently delete "'+item.name+'" from History? This cannot be undone.'))return;
+ onMeasurementRemoved(index);
  measures.splice(index,1);save();draw();notifyWorkspace('Measurement permanently deleted');
 }
 function historyEmpty(host,message){
@@ -998,7 +1000,7 @@ function lists(){
  measures.forEach((m,index)=>{
   const meta=[m.points.length+' waypoints',total(m.points).toFixed(2)+' NM total',
     m.archived?'Archived':m.visible===false?'Currently hidden':null].filter(Boolean).join(' · ');
-  const cardData={name:m.name||'Measurement',type:'MEASUREMENT',detail:meta,
+  const cardData={name:m.name||'Measurement',type:measurementEdit?.index===index?'EDITING':'MEASUREMENT',detail:meta,
     accent:'#ffc46f',symbol:'⌁',hidden:m.visible===false,measure:true,
     autoLoad:m.autoLoad===true,onAutoLoad:checked=>setMeasureAlways(index,checked)};
   if(m.archived){
@@ -1010,14 +1012,20 @@ function lists(){
   }else{
    activeMeasures.appendChild(createSavedCard(cardData,[
     {label:'⌕ Focus',click:()=>zoom(m.points)},
+    {label:measurementEdit?.index===index?'● Editing':'✎ Edit handles',click:()=>beginMeasurementEdit(index),
+     title:'Drag measurement waypoint handles on the map; save or cancel changes'},
     {label:'✎ Rename',click:()=>{
      const newName=prompt('Measurement name:',m.name);if(newName===null)return;
      const name=newName.trim();if(name){m.name=name.slice(0,120);save();draw()}
     }},
-    {label:m.visible===false?'◌ Show':'◉ Hide',click:()=>{m.visible=!m.visible;save();draw()}},
+    {label:m.visible===false?'◌ Show':'◉ Hide',click:()=>{
+      if(measurementEdit?.index===index)cancelMeasurementEdit(false);
+      m.visible=!m.visible;save();draw();
+    }},
     {label:'↧ Archive',click:()=>archiveMeasure(index)},
     {label:'× Delete',danger:true,click:()=>{
       if(!confirm('Delete saved measurement "'+m.name+'"?'))return;
+      onMeasurementRemoved(index);
       measures.splice(index,1);save();draw();
     }}
    ]));
@@ -1097,6 +1105,10 @@ function updateMeasureDisplay(cursor){
   ' · Bearing '+bearing+' · Total '+cumulative.toFixed(2)+' NM';
 }
 function toggleMode(m){
+ if(measurementEdit&&m){
+  if(measurementEdit.dirty&&!confirm('Discard unsaved measurement changes and switch tools?'))return;
+  cancelMeasurementEdit();
+ }
  const next=mode===m?'':m;
  closeMeasureMenu();
  clearMeasureDraftGraphics();
@@ -1175,6 +1187,7 @@ function measureFromContext(){
  closeMeasureMenu();
  if(!target)return;
  if(mode!=='measure')toggleMode('measure');
+ if(mode!=='measure')return; // User declined discarding a pending edit.
  revealAccordion('panel-measure',false);
  processMapSelection(target);
 }
@@ -1250,7 +1263,7 @@ function processMapSelection(latlng){
 }
 map.on('click',e=>processMapSelection(e.latlng));
 function onMapPointerMove(ev){
-  if(ev.target?.closest?.('.leaflet-control, .leaflet-popup, #measureContextMenu'))return;
+  if(ev.target?.closest?.('.leaflet-control, .leaflet-popup, #measureContextMenu, #measurementEditPanel'))return;
   const location=map.mouseEventToLatLng(ev);
   $('hud').textContent=ddm(location.lat,'lat')+'  '+ddm(location.lng,'lon')+' · '+location.lat.toFixed(6)+', '+location.lng.toFixed(6);
   if(mode==='measure'){
@@ -1262,9 +1275,11 @@ function onMapPointerMove(ev){
     }else updateMeasureDisplay();
   }
 }
+L.DomEvent.disableClickPropagation($('measurementEditPanel'));
+L.DomEvent.disableScrollPropagation($('measurementEditPanel'));
 map.getContainer().addEventListener('pointermove',onMapPointerMove,{capture:true,passive:true});
 map.getContainer().addEventListener('contextmenu',event=>{
- if(event.target?.closest?.('.leaflet-control, .leaflet-popup, #measureContextMenu'))return;
+ if(event.target?.closest?.('.leaflet-control, .leaflet-popup, #measureContextMenu, #measurementEditPanel'))return;
  event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
  showMeasureMenu(event);
 },true);
