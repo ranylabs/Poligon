@@ -173,6 +173,14 @@ The Coordinate editor now chooses geometry **at the final save action** rather t
 
 The old geometry-type dropdown in Object settings was removed to eliminate duplicate, conflicting choices. No polygon is silently selected for 3+ coordinates.
 
+## Temporary blue weather point — lifecycle fix (27 Nov 2026)
+
+The small turquoise dot formerly left offshore after closing a **WEATHER PICKER** popup was caused by `openCompactWeatherAt()` creating a Leaflet `L.circleMarker` without removing it on `popupclose`. It was **not** an object, saved route, position report, or measurement.
+
+The popup now owns its temporary marker. Closing it automatically removes **only its own marker**; opening a second popup also cleans up the first one without accidentally removing the new selection. The existing weather position remains available for the detailed sidebar forecast until cleared.
+
+The **Marine weather** sidebar now has **Clear weather location** and an explanatory location/status label. Clearing deselects the forecast position, removes any temporary weather marker, resets the sidebar forecast display, and closes the compact popup when applicable. Leaving the sidebar's **Pick weather point** mode also removes its temporary map pin. Weather selections are not stored in Workspace, History or project JSON.
+
 ## Right-click map quick actions (November 2026)
 
 Right-click anywhere on the Leaflet map, including a saved polygon/route/point or a reference layer, to open a compact, mouse-positioned **MAP ACTIONS** menu:
