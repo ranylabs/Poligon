@@ -761,6 +761,142 @@ function archiveObject(index){
  if(editing===index)resetEditor();
  save();draw();notifyWorkspace(o.name+' moved to History');
 }
+/* Measurement edit is explicitly opt-in. Handles never drag in normal map mode.
+   The saved data is only changed by Save Changes; Cancel restores it verbatim. */
+function cloneMeasurementPoints(points){
+ return points.map(p=>[Number(p[0]),Number(p[1])]);
+}
+function measurementPointsDiffer(original,current){
+ return original.some((p,i)=>!current[i]||
+  Math.abs(p[0]-current[i][0])>1e-9||
+  Math.abs(p[1]-current[i][1])>1e-9);
+}
+function resetMeasurementEditGeometry(){
+ const editor=measurementEdit;
+ if(!editor)return;
+ editor.line.setLatLngs(editor.points);
+ for(let i=1;i<editor.points.length;i++){
+  const a=editor.points[i-1],b=editor.points[i],label=editor.labels[i-1];
+  label.setLatLng([(a[0]+b[0])/2,(a[1]+b[1])/2]);
+  label.setTooltipContent(dist(a,b).toFixed(2)+' NM');
+  label.openTooltip();
+ }
+ editor.totalLabel.setLatLng(editor.points[editor.points.length-1]);
+ const totalNM=total(editor.points);
+ editor.totalLabel.setTooltipContent('Σ '+totalNM.toFixed(2)+' NM');
+ editor.totalLabel.openTooltip();
+ editor.dirty=measurementPointsDiffer(editor.original,editor.points);
+ $('measurementEditTotal').textContent=totalNM.toFixed(2)+' NM';
+ const state=$('measurementEditState');
+ state.textContent=editor.dirty?'Unsaved position changes — Save or Cancel':'No changes yet';
+ state.classList.toggle('changed',editor.dirty);
+}
+function beginMeasurementEdit(index){
+ const m=measures[index];
+ if(!m||m.archived)return;
+ if(measurementEdit){
+  if(measurementEdit.index===index){
+   $('measurementEditPanel').hidden=false;return;
+  }
+  if(measurementEdit.dirty&&!confirm('Discard unsaved changes to the current measurement?'))return;
+  cancelMeasurementEdit();
+ }
+ if(mode==='measure'&&draft.length&&
+   !confirm('Discard the unfinished measurement and edit this saved measurement?'))return;
+ if(mode)toggleMode('');
+ closeMeasureMenu();
+ map.closePopup();
+ const source=cloneMeasurementPoints(m.points);
+ const layer=L.layerGroup().addTo(map);
+ const editor={
+  index,original:source,points:cloneMeasurementPoints(source),
+  originalVisible:m.visible!==false,layer,handles:[],labels:[],dirty:false,
+  line:null,totalLabel:null
+ };
+ measurementEdit=editor;
+ draw(); // Hide the stored line while the editable copy is visible.
+ editor.line=L.polyline(editor.points,{
+  color:'#ffd17b',weight:4,dashArray:'8 6',opacity:1,interactive:false
+ }).addTo(layer);
+ for(let i=0;i<editor.points.length;i++){
+  const point=editor.points[i];
+  const marker=L.marker(point,{
+   draggable:true,autoPan:true,keyboard:false,zIndexOffset:1500,
+   bubblingMouseEvents:false,
+   icon:L.divIcon({
+    className:'measure-edit-vertex',
+    html:'<span class="measure-edit-handle">'+(i+1)+'</span>',
+    iconSize:[32,32],iconAnchor:[16,16]
+   })
+  }).addTo(layer);
+  marker.bindTooltip('Drag waypoint '+(i+1),{direction:'top'});
+  marker.on('drag',()=>{
+   const next=marker.getLatLng();
+   editor.points[i]=[next.lat,next.lng];
+   resetMeasurementEditGeometry();
+  });
+  marker.on('dragend',()=>{
+   const next=marker.getLatLng();
+   editor.points[i]=[next.lat,next.lng];
+   resetMeasurementEditGeometry();
+  });
+  editor.handles.push(marker);
+  if(i>0){
+   const prev=editor.points[i-1];
+   const midpoint=[(prev[0]+point[0])/2,(prev[1]+point[1])/2];
+   const label=L.marker(midpoint,{opacity:0,interactive:false}).addTo(layer);
+   label.bindTooltip('0.00 NM',{
+    permanent:true,direction:'center',className:'measureEditLabel'
+   }).openTooltip();
+   editor.labels.push(label);
+  }
+ }
+ editor.totalLabel=L.marker(editor.points.at(-1),{
+  opacity:0,interactive:false
+ }).addTo(layer);
+ editor.totalLabel.bindTooltip('Σ 0.00 NM',{
+  permanent:true,direction:'right',offset:[17,16],className:'measureEditTotal'
+ }).openTooltip();
+ $('measurementEditName').textContent=m.name||'Measurement';
+ $('measurementEditPanel').hidden=false;
+ resetMeasurementEditGeometry();
+ zoom(editor.points);
+ notifyWorkspace('Edit mode: drag the numbered handles, then Save Changes or Cancel');
+}
+function cancelMeasurementEdit(redraw=true){
+ const editor=measurementEdit;
+ if(!editor)return;
+ if(editor.layer&&map.hasLayer(editor.layer))map.removeLayer(editor.layer);
+ measurementEdit=null;
+ $('measurementEditPanel').hidden=true;
+ $('measurementEditState').classList.remove('changed');
+ if(redraw)draw();
+}
+function saveMeasurementEdit(){
+ const editor=measurementEdit;
+ if(!editor)return;
+ const m=measures[editor.index];
+ if(!m||m.archived){
+  cancelMeasurementEdit();return;
+ }
+ if(editor.points.length<2)return;
+ const changed=editor.dirty;
+ if(changed){
+  m.points=cloneMeasurementPoints(editor.points);
+  m.updatedAt=new Date().toISOString();
+ }
+ // An originally hidden measurement becomes visible after the operator saves an edit.
+ m.visible=true;
+ cancelMeasurementEdit(false);
+ if(changed||!editor.originalVisible)save();
+ draw();
+ notifyWorkspace(changed?(m.name+' updated · '+total(m.points).toFixed(2)+' NM'):'Measurement edit closed — no position changes');
+}
+function onMeasurementRemoved(index){
+ if(!measurementEdit)return;
+ if(measurementEdit.index===index)cancelMeasurementEdit(false);
+ else if(measurementEdit.index>index)measurementEdit.index--;
+}
 function archiveMeasure(index){
  const m=measures[index];if(!m)return;
  m.archived=true;m.archivedAt=new Date().toISOString();m.visible=false;m.autoLoad=false;
