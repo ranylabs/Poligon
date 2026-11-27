@@ -501,14 +501,14 @@ function resetEditor(){
  editing=-1;
  $('points').replaceChildren();
  $('name').value='';$('color').value='#2da6e9';$('buffer').value=0;
- $('autoload').checked=true;$('liveEditStatus').hidden=true;
+ $('autoload').checked=false;$('liveEditStatus').hidden=true;
  addPoint();updatePlotChoices();
 }
 function beginEditObject(index){
  const o=objects[index];if(!o)return;
  editing=index;
  $('name').value=o.name||'';$('color').value=o.color||'#2da6e9';
- $('buffer').value=o.buffer||0;$('autoload').checked=o.autoLoad!==false;
+ $('buffer').value=o.buffer||0;$('autoload').checked=o.autoLoad===true;
  $('liveEditStatus').hidden=false;
  $('points').replaceChildren();
  o.points.forEach(p=>addPoint(ddm(p[0],'lat'),ddm(p[1],'lon')));
@@ -542,6 +542,7 @@ function plot(requestedType){try{
  const obj={name:$('name').value.trim()||type+' '+(objects.length+1),type,color:$('color').value,
   buffer:Math.max(0,+$('buffer').value||0),autoLoad:$('autoload').checked,
   points:p,visible:prior?prior.visible!==false:true,
+  archived:false,createdAt:prior?.createdAt||new Date().toISOString(),
   quickMarker:type==='Point'&&prior?.quickMarker===true};
  const updated=editing>=0;
  if(updated)objects[editing]=obj;else objects.push(obj);
@@ -572,7 +573,7 @@ function bindControlledPopup(layer,html){
 function draw(){
   group.clearLayers();
   objects.forEach(o=>{
-    if(!o.visible)return;
+    if(o.archived||!o.visible)return;
     if(o.buffer>0&&typeof turf!=='undefined'){
       try{
         L.geoJSON(turf.buffer(geo(o),o.buffer,{units:'nauticalmiles',steps:48}),{
@@ -602,7 +603,7 @@ function draw(){
     });
   });
   measures.forEach(m=>{
-    if(!m.visible)return;
+    if(m.archived||!m.visible)return;
     const line=L.polyline(m.points,{color:'#ffc04a',dashArray:'7 5',weight:3,bubblingMouseEvents:false});
     bindSelectable(line);
     line.addTo(group);
@@ -723,7 +724,11 @@ function lists(){
  }
  updateWorkspaceTotals();
 }
-function zoom(p){if(p.length===1)map.setView(p[0],13);else map.fitBounds(L.latLngBounds(p),{padding:[40,40]})}function fitAll(){let p=[...objects.flatMap(o=>o.points),...measures.flatMap(m=>m.points)];if(p.length)zoom(p)}
+function zoom(p){if(p.length===1)map.setView(p[0],13);else map.fitBounds(L.latLngBounds(p),{padding:[40,40]})}function fitAll(){
+ const pts=[...objects.filter(o=>!o.archived&&o.visible!==false).flatMap(o=>o.points),
+  ...measures.filter(m=>!m.archived&&m.visible!==false).flatMap(m=>m.points)];
+ if(pts.length)zoom(pts);
+}
 let activeMeasureMarkers=[];
 function closeMeasureMenu(){
  $('measureContextMenu').style.display='none';
@@ -803,7 +808,8 @@ function finishMeasure(){
  if(mode!=='measure')return;
  if(draft.length<2){$('measureInfo').textContent='At least two points required to save a measurement.';return}
  const fixedTotal=total(draft);
- measures.push({name:'Measurement '+(measures.length+1),points:[...draft],visible:true});
+ measures.push({name:'Measurement '+(measures.length+1),points:[...draft],visible:true,
+  autoLoad:false,archived:false,createdAt:new Date().toISOString()});
  save();
  draw();
  toggleMode('');
@@ -830,7 +836,7 @@ function nearestVisibleVertexAtScreen(clientX,clientY){
  const mouse=L.point(clientX-bounds.left,clientY-bounds.top);
  let found=null,bestDistance=10;
  for(const geometry of [...objects,...measures]){
-  if(geometry.visible===false||!Array.isArray(geometry.points))continue;
+  if(geometry.archived||geometry.visible===false||!Array.isArray(geometry.points))continue;
   for(const point of geometry.points){
    const delta=map.latLngToContainerPoint(point).distanceTo(mouse);
    if(delta<bestDistance){bestDistance=delta;found=L.latLng(point[0],point[1])}
@@ -878,7 +884,7 @@ function addMarkerFromContext(){
   name,type:'Point',
   points:[[target.lat,target.lng]],
   color:$('color')?.value||'#2da6e9',
-  buffer:0,visible:true,autoLoad:true,quickMarker:true
+  buffer:0,visible:true,autoLoad:false,archived:false,quickMarker:true,createdAt:new Date().toISOString()
  };
  objects.push(marker);
  save();draw();
@@ -999,9 +1005,22 @@ function normalizeProjectObjects(data){
    name:String(o.name||geometry).slice(0,120),
    color:/^#[0-9a-f]{6}$/i.test(o.color||'')?o.color:'#2da6e9',
    buffer:Math.max(0,Number(o.buffer)||0),
-   autoLoad:o.autoLoad!==false,
+   autoLoad:o.autoLoad===true,archived:o.archived===true,
    visible:o.visible!==false
   };
+ });
+}
+function normalizeProjectMeasures(data){
+ if(!Array.isArray(data))throw Error('Invalid project measurement list');
+ return data.map(m=>{
+  if(!Array.isArray(m?.points)||m.points.length<2)throw Error('Invalid measurement geometry');
+  const points=m.points.map(p=>{
+   if(!Array.isArray(p)||p.length<2||!Number.isFinite(Number(p[0]))||!Number.isFinite(Number(p[1]))||
+    Math.abs(Number(p[0]))>90||Math.abs(Number(p[1]))>180)throw Error('Invalid measurement coordinate');
+   return [Number(p[0]),Number(p[1])];
+  });
+  return {...m,points,name:String(m.name||'Measurement').slice(0,120),
+   autoLoad:m.autoLoad===true,archived:m.archived===true,visible:m.visible!==false};
  });
 }
 function importJSON(e){
@@ -1013,8 +1032,8 @@ function importJSON(e){
   const rawMeasures=oldFormat?[]:data.measures;
   if(!Array.isArray(rawObjects)||!Array.isArray(rawMeasures))throw Error('Invalid project');
   const restored=normalizeProjectObjects(rawObjects);
-  if(rawMeasures.some(m=>!Array.isArray(m.points)||m.points.length<2))throw Error('Invalid measurement');
-  objects=restored;measures=rawMeasures;
+  const restoredMeasures=normalizeProjectMeasures(rawMeasures);
+  objects=restored;measures=restoredMeasures;
   resetEditor();save();draw();fitAll();
   notifyWorkspace('Project loaded. Startup display preferences have been preserved.');
  }).catch(error=>alert(error.message)).finally(()=>{e.target.value=''});
@@ -1204,12 +1223,17 @@ function openCompactWeatherAt(latlng){
 try{
  const data=JSON.parse(localStorage.getItem('poligon-v1')||'{}');
  objects=Array.isArray(data.objects)?normalizeProjectObjects(data.objects).map(o=>({
-   ...o,visible:o.autoLoad!==false
- })):[]; // Objects remain in Workspace even if they start hidden on the map.
- measures=Array.isArray(data.measures)?data.measures:[];
+   ...o,archived:o.archived===true||!o.autoLoad,visible:o.autoLoad===true&&o.archived!==true,
+   archivedAt:(o.archived===true||!o.autoLoad)?(o.archivedAt||new Date().toISOString()):o.archivedAt
+ })):[]; // Not pinned = archived at the next visit, still retrievable.
+ measures=Array.isArray(data.measures)?normalizeProjectMeasures(data.measures).map(m=>({
+   ...m,archived:m.archived===true||!m.autoLoad,visible:m.autoLoad===true&&m.archived!==true,
+   archivedAt:(m.archived===true||!m.autoLoad)?(m.archivedAt||new Date().toISOString()):m.archivedAt
+ })):[];
 }catch(error){console.warn('Workspace restore failed',error)}
 addPoint();draw();
-const initialVisible=[...objects.filter(o=>o.visible!==false).flatMap(o=>o.points),...measures.filter(m=>m.visible!==false).flatMap(m=>m.points)];
+const initialVisible=[...objects.filter(o=>!o.archived&&o.visible!==false).flatMap(o=>o.points),
+  ...measures.filter(m=>!m.archived&&m.visible!==false).flatMap(m=>m.points)];
 if(initialVisible.length)zoom(initialVisible);
 
 
