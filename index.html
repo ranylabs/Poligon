@@ -223,12 +223,32 @@ details[open]>.accordion-trigger .accordion-chevron{transform:rotate(225deg) tra
 .context-discovery-hint{display:flex;gap:10px;align-items:center;background:#0b3542;border:1px solid #326779;color:#b8dce6;border-radius:9px;margin:9px 0 13px;padding:10px 12px;font-size:12px;line-height:1.5}
 .context-discovery-hint>span:first-child{font-size:21px;color:#74ddeb;line-height:1}
 .context-discovery-hint b{color:#aaf4f3}
+
+.autoload-setting{margin:12px 0;display:flex;align-items:flex-start;gap:9px;background:#103442;border:1px solid #3c7887;border-radius:9px;padding:11px;cursor:pointer}
+.autoload-setting input{width:18px;height:18px;flex:none;accent-color:#51d5eb;margin:2px 0 0}
+.autoload-setting span{display:block}.autoload-setting b{font-size:13px;line-height:1.5}
+.autoload-setting small{display:block;color:#a5c4d0;font-size:11px;line-height:1.6;margin-top:2px}
+.live-edit-status{display:flex;flex-direction:column;gap:4px;padding:10px;border:1px solid #3f9b88;background:#134339;border-radius:8px;font-size:12px;line-height:1.5;color:#b3f9e2;margin:10px 0}
+.live-edit-status b{font-size:10px;letter-spacing:.09em;color:#8bf9d3}
+.live-edit-status[hidden]{display:none}
+.saved-card-autoload{display:flex;align-items:center;gap:7px;font-size:11px;color:#a6d8e5;cursor:pointer;margin-top:7px}
+.saved-card-autoload input{width:16px;height:16px;flex:none;accent-color:#51d5eb;margin:0}
+.leaflet-control-layers{background:#132e40!important;color:#f0f7fc!important;border:1px solid #497c91!important;box-shadow:0 8px 26px #00121ea0!important;border-radius:10px!important}
+.leaflet-control-layers-expanded{padding:11px 13px!important;min-width:192px;max-width:min(255px,68vw)}
+.leaflet-control-layers-list{font:13px/1.55 Inter,system-ui,Arial,sans-serif!important;color:#f0f7fc!important}
+.leaflet-control-layers-list label{color:#f0f7fc!important;padding:4px 3px;display:block;cursor:pointer;border-radius:5px}
+.leaflet-control-layers-list label:hover{background:#244b60}
+.leaflet-control-layers-list label span,.leaflet-control-layers-base span,.leaflet-control-layers-overlays span{color:#f0f7fc!important}
+.leaflet-control-layers-list input{accent-color:#67daee!important;vertical-align:middle;margin-right:8px;width:16px;height:16px}
+.leaflet-control-layers-separator{border-top:1px solid #527585!important;margin:9px 0!important}
+.leaflet-control-layers-toggle{width:45px!important;height:45px!important}
+@media(max-width:750px){.leaflet-control-layers-expanded{min-width:184px}}
 </style></head><body><div id="app"><aside aria-label="Poligon controls"><div class="app-brand">
   <div class="brand-logo" aria-hidden="true">P<span>·</span></div>
   <div class="brand-copy"><div class="brand-eyebrow">MARITIME OPERATIONS</div><div class="brand-title">POLIGON <span>Mapper</span></div><div class="brand-subtitle">Geospatial planning workspace</div></div>
   <span class="brand-version">BETA</span>
 </div>
-<details id="workspace" class="workspace-panel accordion-workspace" open>
+<details id="workspace" class="workspace-panel accordion-workspace">
   <summary class="accordion-trigger workspace-trigger" aria-label="Show or hide saved workspace">
     <span class="workspace-trigger-name"><span class="workspace-kicker-dot"></span> YOUR WORKSPACE</span>
     <span id="workspaceCounter" class="workspace-counter">0 saved</span>
@@ -252,7 +272,12 @@ details[open]>.accordion-trigger .accordion-chevron{transform:rotate(225deg) tra
       <span class="accordion-title"><span class="tool-index">01</span><span>Object settings</span></span>
       <span class="accordion-chevron" aria-hidden="true"></span>
     </summary>
-    <div class="accordion-content"><input id="name" placeholder="Object name" style="width:100%"><div class="row"><label>Color <input id="color" type="color" value="#2da6e9"></label><label>Buffer NM <input id="buffer" type="number" min="0" step=".1" value="0" style="width:70px"></label></div><p class="tool-hint">Choose Polygon or Route after entering the coordinates in the editor below. Geometry type is always explicit for 3+ points.</p></div>
+    <div class="accordion-content">
+ <label for="name">Object name</label><input id="name" placeholder="Object name" style="width:100%" maxlength="120">
+ <div class="row" style="margin-top:9px"><label>Color <input id="color" type="color" value="#2da6e9"></label><label>Buffer NM <input id="buffer" type="number" min="0" step=".1" value="0" style="width:78px"></label></div>
+ <label class="autoload-setting"><input id="autoload" type="checkbox" checked><span><b>Show automatically on each visit</b><small>The object stays in Your Workspace regardless. If unchecked, it starts hidden on the map next time.</small></span></label>
+ <div id="liveEditStatus" class="live-edit-status" role="status" hidden><b>LIVE EDITING</b><span>Name, color, buffer and startup setting save immediately. Only changes to the coordinate table require Update Polygon / Route.</span></div>
+ <p class="tool-hint">Choose Polygon or Route after entering the coordinates in the editor below.</p></div>
   </details><details class="accordion-tool tool-panel" id="panel-paste">
     <summary class="accordion-trigger" aria-label="Expand or collapse Paste coordinates">
       <span class="accordion-title"><span class="tool-index">02</span><span>Paste coordinates</span></span>
@@ -426,7 +451,40 @@ $('points').addEventListener('input',updatePlotChoices);
 $('points').addEventListener('change',updatePlotChoices);
 function detect(){let s=norm($('paste').value),res=[];let part=String.raw`\d{1,3}(?:\.\d+)?(?:\s*°?\s*\d{1,2}(?:\.\d+)?)?(?:\s*['"]?\s*\d{1,2}(?:\.\d+)?)?`;let re=new RegExp('('+part+'\\s*[\'"]?\\s*[NS])\\s*[,;|/:-]?\\s*('+part+'\\s*[\'"]?\\s*[EW])','g'),m;while((m=re.exec(s))){let a=parse(m[1],'lat'),b=parse(m[2],'lon');if(a!==null&&b!==null)res.push([a,b])}if(!res.length)for(let line of s.split('\n')){let m=line.match(/([-+]?\d{1,2}\.\d+)\s*[,;\s]\s*([-+]?\d{1,3}\.\d+)/);if(m&&Math.abs(+m[1])<=90&&Math.abs(+m[2])<=180)res.push([+m[1],+m[2]])}if(res.length){$('points').innerHTML='';res.forEach(p=>addPoint(ddm(p[0],'lat'),ddm(p[1],'lon')));revealAccordion('panel-points',true)}$('detected').textContent=res.length+' coordinate pairs detected'}
 function points(){let out=[];for(let r of document.querySelectorAll('.pt')){let a=r.querySelector('.lat').value,b=r.querySelector('.lon').value;if(!a&&!b)continue;let x=parse(a,'lat'),y=parse(b,'lon');if(x===null||y===null)throw Error('Invalid coordinate: '+a+' '+b);out.push([x,y])}return out}
-function resetEditor(){$('points').innerHTML='';$('name').value='';$('buffer').value=0;editing=-1;addPoint();updatePlotChoices()}
+function resetEditor(){
+ editing=-1;
+ $('points').replaceChildren();
+ $('name').value='';$('color').value='#2da6e9';$('buffer').value=0;
+ $('autoload').checked=true;$('liveEditStatus').hidden=true;
+ addPoint();updatePlotChoices();
+}
+function beginEditObject(index){
+ const o=objects[index];if(!o)return;
+ editing=index;
+ $('name').value=o.name||'';$('color').value=o.color||'#2da6e9';
+ $('buffer').value=o.buffer||0;$('autoload').checked=o.autoLoad!==false;
+ $('liveEditStatus').hidden=false;
+ $('points').replaceChildren();
+ o.points.forEach(p=>addPoint(ddm(p[0],'lat'),ddm(p[1],'lon')));
+ updatePlotChoices();
+ revealAccordion('panel-object',false);revealAccordion('panel-points',false);
+ $('name').focus();$('name').scrollIntoView({behavior:'smooth',block:'center'});
+}
+function updateEditedProperties(){
+ if(editing<0||!objects[editing])return;
+ const o=objects[editing];
+ o.name=$('name').value.trim()||'Untitled '+o.type;
+ o.color=$('color').value;
+ const b=Number($('buffer').value);
+ o.buffer=Number.isFinite(b)?Math.max(0,b):0;
+ o.autoLoad=$('autoload').checked;
+ save();draw();
+}
+for(const id of ['name','color','buffer']){
+ $(id).addEventListener('input',updateEditedProperties);
+ $(id).addEventListener('change',updateEditedProperties);
+}
+$('autoload').addEventListener('change',updateEditedProperties);
 function plot(requestedType){try{
  const p=points();if(!p.length)throw Error('Enter coordinates');
  let type;
@@ -434,7 +492,10 @@ function plot(requestedType){try{
  else if(p.length===2)type='Route';
  else if(requestedType==='Polygon'||requestedType==='Route')type=requestedType;
  else throw Error('Choose Plot Polygon or Plot Route below the coordinate table.');
- const obj={name:$('name').value||type+' '+(objects.length+1),type,color:$('color').value,buffer:Math.max(0,+$('buffer').value||0),points:p,visible:true};
+ const prior=editing>=0?objects[editing]:null;
+ const obj={name:$('name').value.trim()||type+' '+(objects.length+1),type,color:$('color').value,
+  buffer:Math.max(0,+$('buffer').value||0),autoLoad:$('autoload').checked,
+  points:p,visible:prior?prior.visible!==false:true};
  const updated=editing>=0;
  if(updated)objects[editing]=obj;else objects.push(obj);
  save();draw();zoom(p);resetEditor();
@@ -533,7 +594,7 @@ function workspaceButton(label,action,opts={}){
  btn.addEventListener('click',ev=>{ev.stopPropagation();action()});
  return btn;
 }
-function createSavedCard({name,type,detail,accent,symbol,hidden=false,measure=false},actions){
+function createSavedCard({name,type,detail,accent,symbol,hidden=false,measure=false,autoLoad=null,onAutoLoad=null},actions){
  const card=document.createElement('article');
  card.className='saved-card'+(measure?' saved-card-measure':'')+(hidden?' hidden-object':'');
  card.style.setProperty('--entity-accent',accent||'#4dc3df');
@@ -543,6 +604,15 @@ function createSavedCard({name,type,detail,accent,symbol,hidden=false,measure=fa
  const title=document.createElement('div');title.className='saved-card-name';title.textContent=name;
  const meta=document.createElement('div');meta.className='saved-card-meta';meta.textContent=detail;
  content.append(title,meta);
+ if(autoLoad!==null){
+   const label=document.createElement('label');label.className='saved-card-autoload';
+   label.title='Show on the map every time this browser opens Poligon. Unchecking affects the next visit.';
+   const cb=document.createElement('input');cb.type='checkbox';cb.checked=autoLoad;
+   const span=document.createElement('span');span.textContent='Show on every visit';
+   label.append(cb,span);cb.addEventListener('click',ev=>ev.stopPropagation());
+   cb.addEventListener('change',ev=>{ev.stopPropagation();onAutoLoad?.(cb.checked)});
+   content.appendChild(label);
+ }
  const badge=document.createElement('span');badge.className='saved-card-type';badge.textContent=hidden?'HIDDEN':type.toUpperCase();
  main.append(icon,content,badge);
  const toolbar=document.createElement('div');toolbar.className='saved-card-controls';toolbar.setAttribute('aria-label','Actions for '+name);
@@ -568,20 +638,18 @@ function lists(){
   const meta=[o.points.length+' point'+(o.points.length===1?'':'s'),o.buffer>0?'Buffer '+o.buffer+' NM':null,o.type==='Route'?total(o.points).toFixed(2)+' NM route':null,!o.visible?'Currently hidden':null].filter(Boolean).join(' · ');
   const actions=[
    {label:'⌕ Focus',click:()=>zoom(o.points),title:'Zoom the map to this saved object'},
-   {label:'✎ Edit',click:()=>{
-      editing=i;$('name').value=o.name;$('color').value=o.color;$('buffer').value=o.buffer;
-      $('points').replaceChildren();
-      o.points.forEach(p=>addPoint(ddm(p[0],'lat'),ddm(p[1],'lon')));
-      updatePlotChoices();
-      revealAccordion('panel-object',false);
-      revealAccordion('panel-points',false);
-      $('name').focus();
-      $('name').scrollIntoView({behavior:'smooth',block:'center'});
-   }},
+   {label:'✎ Edit',click:()=>beginEditObject(i)},
    {label:o.visible?'◉ Hide':'◌ Show',click:()=>{o.visible=!o.visible;save();draw()}},
-   {label:'× Delete',danger:true,click:()=>{if(!confirm('Delete saved object "'+o.name+'"?'))return;objects.splice(i,1);save();draw()}}
+   {label:'× Delete',danger:true,click:()=>{
+    if(!confirm('Delete saved object "'+o.name+'"?'))return;
+    objects.splice(i,1);if(editing===i)resetEditor();else if(editing>i)editing--;
+    save();draw();
+   }}
   ];
-  objectHost.appendChild(createSavedCard({name:o.name||kind,type:kind,detail:meta,accent:/^#[\da-f]{6}$/i.test(o.color)?o.color:'#3ebfe7',symbol:glyph,hidden:o.visible===false},actions));
+  objectHost.appendChild(createSavedCard({name:o.name||kind,type:kind,detail:meta,accent:/^#[\da-f]{6}$/i.test(o.color)?o.color:'#3ebfe7',symbol:glyph,hidden:o.visible===false,autoLoad:o.autoLoad!==false,onAutoLoad:checked=>{
+     o.autoLoad=checked;if(editing===i)$('autoload').checked=checked;
+     save();notifyWorkspace(checked?'Will show on the next visit':'Saved in Workspace; hidden next visit');
+   }},actions));
  });
  if(!objects.length){
   objectHost.innerHTML='<div class="workspace-empty"><span class="empty-icon">⬡</span><span>No saved objects yet. Create a point, route or polygon below.</span></div>';
