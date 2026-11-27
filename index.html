@@ -427,18 +427,18 @@ details[open]>.accordion-trigger .accordion-chevron{transform:rotate(225deg) tra
   </details></aside><div id="map"><div id="workspaceToast" class="workspace-toast" role="status" aria-live="polite"></div><div id="mapProjectSummary" aria-live="polite"><strong>0</strong> objects &nbsp;·&nbsp; <strong>0</strong> measurements saved</div><div id="israelIllustrationMapWarning" class="map-reference-warning" role="status">ISRAEL · ILLUSTRATIVE AREA — NOT AN OFFICIAL SAR BOUNDARY</div><div id="measureHud"></div><div id="measureContextMenu" role="menu" aria-label="Map context actions">
  <div id="mapMenuTitle" class="menu-title">MAP ACTIONS</div>
  <div id="mapMenuCoordinates" class="map-context-coordinates"></div>
+ <div class="context-section-title">AT THIS POSITION</div>
+ <button type="button" onclick="addMarkerFromContext()">● &nbsp;ADD MARKER</button>
+ <button id="mapMenuStartMeasure" type="button" onclick="measureFromContext()">⌁ &nbsp;MEASURE</button>
+ <button type="button" onclick="copyContextCoordinates()">⧉ &nbsp;COPY COORDINATES</button>
+ <button type="button" onclick="addContextPointToEditor()">⊕ &nbsp;ADD COORDINATES</button>
+ <button type="button" class="context-weather-action" onclick="weatherFromContext()">≋ &nbsp;WEATHER PICKER</button>
  <div id="measureMenuSection" hidden>
   <div class="context-section-title">CURRENT MEASUREMENT</div>
   <button id="measureMenuFinish" type="button" onclick="finishMeasure()">✓ &nbsp;Finish &amp; save</button>
   <button id="measureMenuUndo" type="button" onclick="undoMeasurePoint()">↶ &nbsp;Undo last point</button>
   <button class="danger" type="button" onclick="cancelMeasure()">× &nbsp;Cancel measurement</button>
  </div>
- <div class="context-section-title">AT THIS POSITION</div>
- <button id="mapMenuStartMeasure" type="button" onclick="measureFromContext()">⌁ &nbsp;Measure from here</button>
- <button type="button" onclick="addMarkerFromContext()">● &nbsp;Add marker here (save now)</button>
- <button type="button" onclick="addContextPointToEditor()">⊕ &nbsp;Add coordinate to editor</button>
- <button type="button" class="context-weather-action" onclick="weatherFromContext()">≋ &nbsp;Marine weather here</button>
- <button type="button" onclick="copyContextCoordinates()">⧉ &nbsp;Copy coordinates</button>
 </div></div></div><div id="hud">Move mouse over map</div><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script><script>
 const $=id=>document.getElementById(id),KEY='poligon-v1',map=L.map('map').setView([32.5,34.5],8),group=L.layerGroup().addTo(map);
 const tiles=(name,z)=>L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/'+name+'/MapServer/tile/{z}/{y}/{x}',{maxZoom:z,attribution:'Tiles © Esri'});
@@ -992,7 +992,8 @@ function showMeasureMenu(event){
  $('measureMenuSection').hidden=mode!=='measure';
  $('measureMenuFinish').disabled=draft.length<2;
  $('measureMenuUndo').disabled=draft.length<1;
- $('mapMenuStartMeasure').textContent=mode==='measure'?'⌁  Add measurement point here':'⌁  Measure from here';
+ $('mapMenuStartMeasure').textContent='⌁  MEASURE';
+ $('mapMenuStartMeasure').title=mode==='measure'?'Add this point to the current measurement':'Start measuring from this location';
  menu.style.display='block';
  const x=event.clientX-box.left,y=event.clientY-box.top;
  const maxX=Math.max(5,box.width-menu.offsetWidth-5);
