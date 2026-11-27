@@ -269,6 +269,13 @@ details[open]>.accordion-trigger .accordion-chevron{transform:rotate(225deg) tra
 .saved-card-controls .card-restore{background:#28566b;color:#e2fbff;border-color:#3b879c}
 .saved-card-controls .card-always{background:#174c43;color:#a1f2d4;border-color:#387766}
 .autoload-setting small{font-size:11.5px}
+
+.history-search-wrap{display:flex;flex-direction:column;gap:6px;font-size:10px;letter-spacing:.08em;font-weight:800;color:#a4bdc8;margin:12px 0 16px}
+.history-search-wrap input{width:100%;border:1px solid #496a7c;background:#0a2030;color:#e9f6ff;border-radius:8px;padding:10px 12px;font-size:12px;letter-spacing:0;outline:none}
+.history-search-wrap input:focus{border-color:#57bed8;box-shadow:0 0 0 2px #4599ad50}
+.history-items .saved-card[hidden]{display:none}
+.history-items .history-search-empty{padding:11px;color:#aabec9;font-size:12px;line-height:1.55;border:1px dashed #516b78;border-radius:7px;margin-top:5px}
+.history-items .history-search-empty[hidden]{display:none}
 </style></head><body><div id="app"><aside aria-label="Poligon controls"><div class="app-brand">
   <div class="brand-logo" aria-hidden="true">P<span>·</span></div>
   <div class="brand-copy"><div class="brand-eyebrow">MARITIME OPERATIONS</div><div class="brand-title">POLIGON <span>Mapper</span></div><div class="brand-subtitle">Geospatial planning workspace</div></div>
@@ -301,6 +308,10 @@ details[open]>.accordion-trigger .accordion-chevron{transform:rotate(225deg) tra
  </summary>
  <div class="accordion-content history-content">
   <p class="history-caption">Past objects and measurements stay here without cluttering the current workspace. Restore temporarily, show on every visit, or delete permanently.</p>
+  <label class="history-search-wrap" for="historySearch">
+   <span>FIND A SAVED ITEM</span>
+   <input id="historySearch" type="search" placeholder="Search names or geometry types" oninput="filterHistory()" autocomplete="off">
+  </label>
   <div class="history-section">
    <div class="workspace-group-heading"><span>ARCHIVED OBJECTS</span><span id="historyObjectsCount" class="workspace-group-count">0</span></div>
    <div id="historyObjects" class="history-items" aria-label="Archived map objects"></div>
@@ -750,6 +761,29 @@ function historyEmpty(host,message){
  const placeholder=document.createElement('div');placeholder.className='history-empty';
  placeholder.textContent=message;host.appendChild(placeholder);
 }
+function filterHistory(){
+ const query=($('historySearch')?.value||'').trim().toLocaleLowerCase();
+ for(const id of ['historyObjects','historyMeasures']){
+  const host=$(id);if(!host)continue;
+  const cards=[...host.querySelectorAll('.saved-card')];
+  let shown=0;
+  for(const card of cards){
+   const title=(card.querySelector('.saved-card-name')?.textContent||'')+' '+
+     (card.querySelector('.saved-card-meta')?.textContent||'')+' '+
+     (card.querySelector('.saved-card-type')?.textContent||'');
+   const match=!query||title.toLocaleLowerCase().includes(query);
+   card.hidden=!match;
+   if(match)shown++;
+  }
+  host.querySelector('.history-search-empty')?.remove();
+  if(query&&cards.length>0&&shown===0){
+   const note=document.createElement('div');
+   note.className='history-search-empty';
+   note.textContent='No matching archived items.';
+   host.appendChild(note);
+  }
+ }
+}
 function lists(){
  const activeObjects=$('objectList'), activeMeasures=$('measureList'),
        archivedObjects=$('historyObjects'),archivedMeasures=$('historyMeasures');
@@ -824,6 +858,7 @@ function lists(){
   activeMeasures.innerHTML='<div class="workspace-empty"><span class="empty-icon">⌁</span><span>No active measurements. Use Measure below or restore from History.</span></div>';
  if(!archivedMeasures.children.length)historyEmpty(archivedMeasures,'No archived measurements.');
  updateWorkspaceTotals();
+ filterHistory();
 }
 function zoom(p){if(p.length===1)map.setView(p[0],13);else map.fitBounds(L.latLngBounds(p),{padding:[40,40]})}function fitAll(){
  const pts=[...objects.filter(o=>!o.archived&&o.visible!==false).flatMap(o=>o.points),
