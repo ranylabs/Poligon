@@ -1039,7 +1039,8 @@ function lists(){
 }
 function zoom(p){if(p.length===1)map.setView(p[0],13);else map.fitBounds(L.latLngBounds(p),{padding:[40,40]})}function fitAll(){
  const pts=[...objects.filter(o=>!o.archived&&o.visible!==false).flatMap(o=>o.points),
-  ...measures.filter(m=>!m.archived&&m.visible!==false).flatMap(m=>m.points)];
+  ...measures.filter((m,i)=>!m.archived&&m.visible!==false&&measurementEdit?.index!==i).flatMap(m=>m.points),
+  ...(measurementEdit?measurementEdit.points:[])];
  if(pts.length)zoom(pts);
 }
 let activeMeasureMarkers=[];
@@ -1354,6 +1355,8 @@ function importJSON(e){
   if(!Array.isArray(rawObjects)||!Array.isArray(rawMeasures))throw Error('Invalid project');
   const restored=normalizeProjectObjects(rawObjects);
   const restoredMeasures=normalizeProjectMeasures(rawMeasures);
+  if(measurementEdit?.dirty&&!confirm('Discard unsaved measurement edits and load this project?'))return;
+  if(measurementEdit)cancelMeasurementEdit(false);
   objects=restored;measures=restoredMeasures;
   resetEditor();save();draw();fitAll();
   notifyWorkspace('Project loaded. Startup display preferences have been preserved.');
