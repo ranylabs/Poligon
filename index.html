@@ -930,17 +930,40 @@ function save(){try{localStorage.setItem('poligon-v1',JSON.stringify({objects,me
 function download(n,c,t){let u=URL.createObjectURL(new Blob([c],{type:t})),a=document.createElement('a');a.href=u;a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
 function exportKML(){let s='<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document>';for(let o of objects){let c=o.points.map(p=>p[1]+','+p[0]+',0').join(' '),g=o.type==='Point'?'<Point><coordinates>'+c+'</coordinates></Point>':o.type==='Route'?'<LineString><coordinates>'+c+'</coordinates></LineString>':'<Polygon><outerBoundaryIs><LinearRing><coordinates>'+c+' '+o.points[0][1]+','+o.points[0][0]+',0</coordinates></LinearRing></outerBoundaryIs></Polygon>';s+='<Placemark><name>'+clean(o.name)+'</name>'+g+'</Placemark>'}download('Poligon.kml',s+'</Document></kml>','application/vnd.google-earth.kml+xml')}
 function exportJSON(){download('Poligon-project.json',JSON.stringify({objects,measures},null,2),'application/json')}
+function normalizeProjectObjects(data){
+ if(!Array.isArray(data))throw Error('Invalid project object list');
+ return data.map(o=>{
+  if(!Array.isArray(o?.points)||!o.points.length)throw Error('Invalid object geometry');
+  const points=o.points.map(p=>{
+   if(!Array.isArray(p)||p.length<2||!Number.isFinite(Number(p[0]))||!Number.isFinite(Number(p[1]))||
+      Math.abs(Number(p[0]))>90||Math.abs(Number(p[1]))>180)throw Error('Invalid object coordinate');
+   return [Number(p[0]),Number(p[1])];
+  });
+  const geometry=points.length===1?'Point':points.length===2?'Route':
+    o.type==='Route'||o.type==='Line'?'Route':'Polygon';
+  return {
+   ...o,points,type:geometry,
+   name:String(o.name||geometry).slice(0,120),
+   color:/^#[0-9a-f]{6}$/i.test(o.color||'')?o.color:'#2da6e9',
+   buffer:Math.max(0,Number(o.buffer)||0),
+   autoLoad:o.autoLoad!==false,
+   visible:o.visible!==false
+  };
+ });
+}
 function importJSON(e){
  const file=e.target.files?.[0];if(!file)return;
  file.text().then(raw=>{
   const data=JSON.parse(raw);
-  if(!Array.isArray(data.objects)||!Array.isArray(data.measures))throw Error('Invalid project');
-  const restored=data.objects.map(o=>({...o,autoLoad:o.autoLoad!==false}));
-  if(restored.some(o=>!Array.isArray(o.points)||!o.points.length||!['Point','Route','Polygon'].includes(o.type)))throw Error('Invalid object geometry');
-  objects=restored;measures=data.measures;
-  resetEditor();
-  save();draw();fitAll();
-  notifyWorkspace('Project loaded. Each object’s startup preference was preserved.');
+  const oldFormat=Array.isArray(data);
+  const rawObjects=oldFormat?data:data.objects;
+  const rawMeasures=oldFormat?[]:data.measures;
+  if(!Array.isArray(rawObjects)||!Array.isArray(rawMeasures))throw Error('Invalid project');
+  const restored=normalizeProjectObjects(rawObjects);
+  if(rawMeasures.some(m=>!Array.isArray(m.points)||m.points.length<2))throw Error('Invalid measurement');
+  objects=restored;measures=rawMeasures;
+  resetEditor();save();draw();fitAll();
+  notifyWorkspace('Project loaded. Startup display preferences have been preserved.');
  }).catch(error=>alert(error.message)).finally(()=>{e.target.value=''});
 }
 function utc(){let d=new Date(),p=n=>String(n).padStart(2,'0');return d.getUTCFullYear()+'-'+p(d.getUTCMonth()+1)+'-'+p(d.getUTCDate())+'T'+p(d.getUTCHours())+':00'}$('hour').value=utc();
@@ -1127,10 +1150,8 @@ function openCompactWeatherAt(latlng){
 
 try{
  const data=JSON.parse(localStorage.getItem('poligon-v1')||'{}');
- objects=Array.isArray(data.objects)?data.objects.map(o=>({
-   ...o,
-   autoLoad:o.autoLoad!==false,
-   visible:o.autoLoad!==false
+ objects=Array.isArray(data.objects)?normalizeProjectObjects(data.objects).map(o=>({
+   ...o,visible:o.autoLoad!==false
  })):[]; // Objects remain in Workspace even if they start hidden on the map.
  measures=Array.isArray(data.measures)?data.measures:[];
 }catch(error){console.warn('Workspace restore failed',error)}
