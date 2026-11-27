@@ -128,6 +128,20 @@ The website also imports GML files from the IMO's Global SAR Plan system or othe
 - Use **Export imported GeoJSON** to convert and retain the layer; this does not verify its authority.
 - A free read-only IMO web account may be needed to access GISIS. Do not assume that a bulk global export is offered.
 
+## Edit saved measurements with draggable handles (27 Nov 2026)
+
+Saved distance measurements in **Your Workspace** now have an **Edit handles** action, separate from the general **Measure** tool.
+
+- Normal mode: saved measurement waypoints are visible markers but **cannot be dragged**. This prevents accidentally moving a measurement when panning the map.
+- Edit mode: click **Edit handles** on a saved measurement card. Its original display is temporarily replaced by an **editing copy**: amber dashed line, numbered draggable waypoint handles, live per-leg nautical-mile labels, a total-distance label, and a compact bottom-right edit panel.
+- Drag any numbered handle to a new coordinate; each leg distance and the total are recalculated **continuously** during dragging.
+- **Save Changes** commits the revised latitude/longitude coordinates to the existing measurement in `poligon-v1` and updates the displayed map and Workspace distance. The existing `autoLoad`, archive and name settings are preserved; the edited measurement is visible after Save.
+- **Cancel** discards the edit copy and restores the original measurement unchanged, including any previous hidden state.
+- A dirty edit is protected when switching to a different drawing/measurement tool, switching to another saved measurement or importing another project; the user is asked before losing unsaved changes.
+- Archived measurements must first be restored before they can be edited. Measurements still use the existing local-only data format and JSON export.
+
+**Implementation:** Leaflet `L.marker` with `draggable: true` is used only for explicitly activated edit handles; no permanent draggable layer is applied to saved objects. User-tested browser drag/pan QA is still required.
+
 ## Interactive measuring
 
 - **Measure** works on open map, user-defined points, polylines, polygons, buffers and reference lines.
