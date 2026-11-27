@@ -193,19 +193,18 @@ The popup uses the existing Leaflet map, so it stays anchored correctly while th
 - Items pinned with **Show on every visit** remain active and visible at the next opening.
 - **Archive** immediately moves an active item to History, hides it from the map and unpins it. **Restore now** activates an archived item for this session only. **Show always** restores it and pins it for future visits.
 - **Delete forever** permanently removes an item from History (with a confirmation prompt). Plain Delete on an active item also deletes it immediately with confirmation.
-- History contains separate lists for saved objects and saved measurements and is not the same as the map basemap / coastline overlays.
+- History contains separate lists for saved objects and saved measurements, plus a search box to find old names/types without loading them onto the map. It is not the same as the map basemap / coastline overlays.
 - The active/past states are saved in the existing `poligon-v1` localStorage project, including `autoLoad`, `archived` and optional `archivedAt`. JSON export/import preserves these flags. Legacy V4/V5 Line, Polygon, Point and measurement formats are supported.
 
-### Cloud synchronization decision — planned, NOT deployed
+### Cloud synchronization decision — postponed, NO accounts/role management
 
-**Recommendation:** Keep the static GitHub Pages front end and local per-browser cache, and add opt-in private sync through **Firebase Authentication + Cloud Firestore** for personal test data. This is *future work*, not a feature in this release.
+Current requirement: avoid sign-in screens, multiple users and complex access permissions. **Cloud sync is not deployed**, and operator records stay in the local browser unless manually exported.
 
-- Require the operator to sign in; Firestore rules must restrict each user's data to their own `auth.uid`. Never make per-user collections publicly readable or place admin credentials in the static HTML.
-- Store each object/measurement with stable identifier, timestamps, owner UID, status (`active`/`archived`), `autoLoad`, source, and version. Delete tombstones or explicit server deletion must prevent removed history from reappearing on other devices.
-- Debounce cloud writes during live color/name/buffer edits. Use last-modified/version conflict handling and avoid overwriting a newer plan when two devices edit concurrently.
-- Cloud data sync and local offline persistence require user opt-in. For sensitive or official JRCC operational data, do not enable cloud until the storage, location, access control and organizational approval have been reviewed.
-- Keep JSON export as an additional independent backup. GitHub repository is **code hosting only**, never the storage location for operators' private coordinates.
-- Firebase free plan at time of planning: one free Firestore database, 1 GiB storage, 50,000 reads/day and 20,000 writes/day; check pricing and limits before deployment. Firebase web offline cache is optional and requires trusted-device considerations.
+**Recommended right now:** use Poligon local Workspace + History and periodically export a Project JSON backup to a private folder the operator already uses (for example, their own Google Drive). To use another machine, download/import that JSON manually. No authorization flow is added to Poligon.
+
+**Optional future sync if explicitly requested:** a private sync code entered once on each trusted computer. A protected backend must validate the code and limit requests; ideally encrypt stored content client-side. Someone possessing the code could access and modify the shared data, so it must remain private and must not be embedded in the public GitHub Pages HTML. Direct unauthenticated public database writes are not acceptable.
+
+This is a design option only (tracked in [Issue #2](https://github.com/ranylabs/Poligon/issues/2)). No background synchronization, public sharing or automatic cloud upload is enabled. Operational JRCC information requires organizational clearance before any remote storage.
 
 ### Immediate marker
 - Right-click the map and choose **Add marker here (save now)**. A named, colored **map pin** is saved immediately, with `type: "Point"`, `quickMarker: true`, and `autoLoad: false`, without using Plot.
