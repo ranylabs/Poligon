@@ -299,6 +299,9 @@ details[open]>.accordion-trigger .accordion-chevron{transform:rotate(225deg) tra
 .leaflet-tooltip.measureEditLabel{background:#2b2820;color:#ffe2ab;border:1px solid #ffcc79;font-size:11px;font-weight:800;padding:3px 6px;border-radius:5px;box-shadow:0 2px 10px #0513216b}
 .leaflet-tooltip.measureEditTotal{background:#e5a637;color:#261b0d;border:1px solid white;font-size:12px;font-weight:850;padding:4px 7px;border-radius:6px}
 @media(max-width:750px){.measurement-edit-panel{bottom:8px;right:8px;width:min(270px,calc(100% - 16px));padding:11px}.edit-measure-metric span{font-size:24px}.edit-measure-help{font-size:11px;margin:8px 0}}
+
+.weather-selected-location{font-size:11.5px;line-height:1.55;color:#a5ceda;background:#103444;border:1px solid #315d6f;border-radius:8px;padding:9px 10px;margin:8px 0 10px}
+#clearWeatherPoint:disabled{opacity:.45;cursor:not-allowed}
 </style></head><body><div id="app"><aside aria-label="Poligon controls"><div class="app-brand">
   <div class="brand-logo" aria-hidden="true">P<span>·</span></div>
   <div class="brand-copy"><div class="brand-eyebrow">MARITIME OPERATIONS</div><div class="brand-title">POLIGON <span>Mapper</span></div><div class="brand-subtitle">Geospatial planning workspace</div></div>
@@ -399,7 +402,7 @@ details[open]>.accordion-trigger .accordion-chevron{transform:rotate(225deg) tra
       <span class="accordion-title"><span class="tool-index">05</span><span>Marine weather</span></span>
       <span class="accordion-chevron" aria-hidden="true"></span>
     </summary>
-    <div class="accordion-content"><p class="muted">Open-Meteo model forecasts. Requires internet. Not observations.</p><button id="weatherbtn" onclick="toggleMode('weather')">Pick weather point</button><label>UTC hour <input type="datetime-local" id="hour"></label><button onclick="weather()">Refresh</button><div id="weatherData" class="muted">Select a position.</div></div>
+    <div class="accordion-content"><p class="muted">Open-Meteo model forecasts. Requires internet. Not observations.</p><button id="weatherbtn" onclick="toggleMode('weather')">Pick weather point</button><label>UTC hour <input type="datetime-local" id="hour"></label><button onclick="weather()">Refresh</button><button id="clearWeatherPoint" type="button" class="quiet-action" onclick="clearWeatherSelection()" disabled>Clear weather location</button><div id="weatherSelectionLabel" class="weather-selected-location" role="status">No weather location selected. Weather markers are temporary, not saved objects.</div><div id="weatherData" class="muted">Select a position.</div></div>
   </details><details class="accordion-tool tool-panel" id="panel-project">
     <summary class="accordion-trigger" aria-label="Expand or collapse Project files">
       <span class="accordion-title"><span class="tool-index">06</span><span>Project files</span></span>
@@ -477,7 +480,7 @@ const $=id=>document.getElementById(id),KEY='poligon-v1',map=L.map('map').setVie
 const tiles=(name,z)=>L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/'+name+'/MapServer/tile/{z}/{y}/{x}',{maxZoom:z,attribution:'Tiles © Esri'});
 const street=tiles('World_Street_Map',19).addTo(map),ocean=tiles('Ocean/World_Ocean_Base',16),topo=tiles('World_Topo_Map',19),sat=tiles('World_Imagery',19),seamarks=L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png',{attribution:'© OpenSeaMap',maxZoom:18}).addTo(map);
 L.control.layers({Street:street,Ocean:ocean,Topographic:topo,Satellite:sat},{'Marine seamarks':seamarks}).addTo(map);
-let objects=[],measures=[],mode='',draft=[],preview=null,editing=-1,selected=null,weatherPin=null,mapContextLatLng=null,mapContextSnapped=false,measurementEdit=null;
+let objects=[],measures=[],mode='',draft=[],preview=null,editing=-1,selected=null,weatherPin=null,weatherPinKind=null,mapContextLatLng=null,mapContextSnapped=false,measurementEdit=null;
 const clean=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),norm=s=>String(s).toUpperCase().replace(/[′’‘]/g,"'").replace(/[″“”]/g,'"').replace(/[º˚]/g,'°');
 function parse(s,t){s=norm(s).trim();let h=s.match(/[NSEW]/)?.[0];if(h&&!(t==='lat'?'NS':'EW').includes(h))return null;let a=s.replace(/[NSEW°'"]/g,' ').match(/[-+]?\d+(?:\.\d+)?/g);if(!a||a.length>3)return null;let d=+a[0],m=+(a[1]||0),v=+(a[2]||0);if(m>=60||v>=60)return null;let x=(Math.abs(d)+m/60+v/3600)*(h?(h==='S'||h==='W'?-1:1):d<0?-1:1);return Math.abs(x)<=(t==='lat'?90:180)?x:null}
 function ddm(x,t){let a=Math.abs(x),d=Math.floor(a),m=(a-d)*60;return String(d).padStart(t==='lat'?2:3,'0')+'°'+m.toFixed(3).padStart(6,'0')+"'"+(t==='lat'?(x>=0?'N':'S'):(x>=0?'E':'W'))}
@@ -1117,6 +1120,7 @@ function toggleMode(m){
   cancelMeasurementEdit();
  }
  const next=mode===m?'':m;
+ if(mode==='weather'&&next!=='weather'&&weatherPinKind==='sidebar')removeWeatherPin();
  closeMeasureMenu();
  clearMeasureDraftGraphics();
  draft=[];
@@ -1263,8 +1267,10 @@ function processMapSelection(latlng){
     updateMeasureDisplay();
   }else if(mode==='weather'){
     selected=p;
-    if(weatherPin)map.removeLayer(weatherPin);
+    removeWeatherPin();
     weatherPin=L.marker(p,{interactive:false}).addTo(map);
+    weatherPinKind='sidebar';
+    updateWeatherSelectionLabel();
     weather();
   }
 }
@@ -1378,6 +1384,30 @@ function importJSON(e){
 function utc(){let d=new Date(),p=n=>String(n).padStart(2,'0');return d.getUTCFullYear()+'-'+p(d.getUTCMonth()+1)+'-'+p(d.getUTCDate())+'T'+p(d.getUTCHours())+':00'}$('hour').value=utc();
 async function weather(){if(!selected){$('weatherData').textContent='Select a position first';return}let [lat,lon]=selected,t=$('hour').value.slice(0,13)+':00';$('weatherData').textContent='Loading...';try{let w='https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m&wind_speed_unit=kn&timezone=GMT&forecast_days=7',m='https://marine-api.open-meteo.com/v1/marine?latitude='+lat+'&longitude='+lon+'&hourly=wave_height,wave_direction,ocean_current_velocity,ocean_current_direction&timezone=GMT&forecast_days=7';let [a,b]=await Promise.all([fetch(w).then(r=>{if(!r.ok)throw Error('Weather API '+r.status);return r.json()}),fetch(m).then(r=>{if(!r.ok)throw Error('Marine API '+r.status);return r.json()})]);let i=a.hourly.time.indexOf(t),j=b.hourly.time.indexOf(t);if(i<0||j<0)throw Error('Hour outside forecast');let f=(x,u)=>x==null?'Unavailable':Number(x).toFixed(1)+' '+u,h=a.hourly,k=b.hourly;let c=k.ocean_current_velocity[j];$('weatherData').innerHTML='<b>'+t+' UTC</b><br>Wind '+f(h.wind_speed_10m[i],'kt')+' from '+f(h.wind_direction_10m[i],'°')+'<br>Gusts '+f(h.wind_gusts_10m[i],'kt')+'<br>Significant waves '+f(k.wave_height[j],'m')+'<br>Wave direction '+f(k.wave_direction[j],'°')+'<br>Current '+(c==null?'Unavailable':(c/1.852).toFixed(2)+' kt')+' toward '+f(k.ocean_current_direction[j],'°')+'<br><small>Open-Meteo model forecasts; current converted from km/h to knots. Nearshore limitations.</small>'}catch(e){$('weatherData').textContent='Unavailable: '+e.message}}
 
+/* Weather locations are temporary indicators, never stored map geometry.
+   A popup selection marker is removed when its popup closes. */
+function removeWeatherPin(){
+ if(weatherPin&&map.hasLayer(weatherPin))map.removeLayer(weatherPin);
+ weatherPin=null;
+ weatherPinKind=null;
+}
+function updateWeatherSelectionLabel(){
+ const label=$('weatherSelectionLabel'),button=$('clearWeatherPoint');
+ if(button)button.disabled=!selected;
+ if(!label)return;
+ label.textContent=selected
+  ?'Selected forecast location: '+ddm(selected[0],'lat')+'  '+ddm(selected[1],'lon')+' · not a saved object'
+  :'No weather location selected. Weather markers are temporary, not saved objects.';
+}
+function clearWeatherSelection(){
+ if(mode==='weather')toggleMode('weather');
+ const popup=miniWeatherState?.popup;
+ if(popup&&map.hasLayer(popup))map.closePopup(popup);
+ removeWeatherPin();
+ selected=null;
+ updateWeatherSelectionLabel();
+ if($('weatherData'))$('weatherData').textContent='Select a position.';
+}
 /* Lightweight map-anchored, time-steppable Marine Weather (Open-Meteo forecast). */
 const miniForecastCache=new Map();
 let miniWeatherRequestId=0,miniWeatherState=null;
@@ -1527,10 +1557,13 @@ function miniWeatherError(state,message){
 function openCompactWeatherAt(latlng){
  const latitude=latlng.lat,longitude=latlng.lng;
  selected=[latitude,longitude];
- if(weatherPin)map.removeLayer(weatherPin);
- weatherPin=L.circleMarker([latitude,longitude],{
+ removeWeatherPin();
+ const temporaryPin=L.circleMarker([latitude,longitude],{
    radius:6,weight:2,color:'#9ceef2',fillColor:'#0b7f9b',fillOpacity:1,interactive:false
  }).addTo(map);
+ weatherPin=temporaryPin;
+ weatherPinKind='popup';
+ updateWeatherSelectionLabel();
  const root=document.createElement('div');
  root.className='mini-weather';
  root.innerHTML='<div class="mini-weather-header">'+
@@ -1543,10 +1576,16 @@ function openCompactWeatherAt(latlng){
  L.DomEvent.disableScrollPropagation(root);
  const popup=L.popup({className:'poligon-weather-popup',maxWidth:355,minWidth:300,autoPan:true,autoPanPadding:L.point(28,35),offset:L.point(0,-6)})
    .setLatLng([latitude,longitude]).setContent(root);
- map.openPopup(popup);
  const token=++miniWeatherRequestId;
- const state={latitude,longitude,root,hour:miniWeatherHourUTC(),forecast:null,token};
+ const state={latitude,longitude,root,hour:miniWeatherHourUTC(),forecast:null,token,popup};
+ popup.on('remove',()=>{
+   // Remove only the marker belonging to this popup, not a newer selection.
+   if(map.hasLayer(temporaryPin))map.removeLayer(temporaryPin);
+   if(weatherPin===temporaryPin){weatherPin=null;weatherPinKind=null}
+   if(miniWeatherState===state)miniWeatherState=null;
+ });
  miniWeatherState=state;
+ map.openPopup(popup);
  miniLoadWeather(latitude,longitude).then(forecast=>{
    if(token!==miniWeatherRequestId||!root.isConnected)return;
    state.forecast=forecast;
