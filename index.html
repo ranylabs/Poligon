@@ -677,51 +677,152 @@ function createSavedCard({name,type,detail,accent,symbol,hidden=false,measure=fa
  card.append(main,toolbar);
  return card;
 }
+/* Current workspace contains session-active items; archive is a separately collapsed history. */
+function isArchived(entry){return entry?.archived===true}
+function itemCounts(){
+ return {currentObjects:objects.filter(o=>!isArchived(o)).length,
+ currentMeasures:measures.filter(m=>!isArchived(m)).length,
+ historyObjects:objects.filter(isArchived).length,
+ historyMeasures:measures.filter(isArchived).length};
+}
 function updateWorkspaceTotals(){
- const n=objects.length,m=measures.length;
- $('workspaceCounter').textContent=(n+m)+' saved';
- $('objectCount').textContent=n;
- $('measureCount').textContent=m;
- if($('mapProjectSummary'))$('mapProjectSummary').innerHTML='<strong>'+n+'</strong> objects &nbsp;·&nbsp; <strong>'+m+'</strong> measurements saved';
+ const n=itemCounts();
+ $('workspaceCounter').textContent=(n.currentObjects+n.currentMeasures)+' active';
+ $('objectCount').textContent=n.currentObjects;
+ $('measureCount').textContent=n.currentMeasures;
+ $('historyCounter').textContent=(n.historyObjects+n.historyMeasures)+' archived';
+ $('historyObjectsCount').textContent=n.historyObjects;
+ $('historyMeasuresCount').textContent=n.historyMeasures;
+ if($('mapProjectSummary'))$('mapProjectSummary').innerHTML=
+  '<strong>'+n.currentObjects+'</strong> objects &nbsp;·&nbsp; <strong>'+n.currentMeasures+'</strong> measurements · <strong>'+ (n.historyObjects+n.historyMeasures) +'</strong> in history';
+}
+function setObjectAlways(index,checked){
+ const o=objects[index];if(!o)return;
+ o.autoLoad=!!checked;
+ if(checked){o.archived=false;o.visible=true}
+ if(editing===index)$('autoload').checked=!!checked;
+ save();draw();
+ notifyWorkspace(checked?'Object set to show on every visit':'Object will move to History on the next visit');
+}
+function setMeasureAlways(index,checked){
+ const m=measures[index];if(!m)return;
+ m.autoLoad=!!checked;
+ if(checked){m.archived=false;m.visible=true}
+ save();draw();
+ notifyWorkspace(checked?'Measurement set to show on every visit':'Measurement will move to History on the next visit');
+}
+function archiveObject(index){
+ const o=objects[index];if(!o)return;
+ o.archived=true;o.archivedAt=new Date().toISOString();o.visible=false;o.autoLoad=false;
+ if(editing===index)resetEditor();
+ save();draw();notifyWorkspace(o.name+' moved to History');
+}
+function archiveMeasure(index){
+ const m=measures[index];if(!m)return;
+ m.archived=true;m.archivedAt=new Date().toISOString();m.visible=false;m.autoLoad=false;
+ save();draw();notifyWorkspace(m.name+' moved to History');
+}
+function restoreObject(index,always=false){
+ const o=objects[index];if(!o)return;
+ o.archived=false;o.visible=true;o.autoLoad=!!always;
+ save();draw();zoom(o.points);
+ notifyWorkspace(o.name+' restored '+(always?'and pinned for future visits':'for this session'));
+}
+function restoreMeasure(index,always=false){
+ const m=measures[index];if(!m)return;
+ m.archived=false;m.visible=true;m.autoLoad=!!always;
+ save();draw();zoom(m.points);
+ notifyWorkspace(m.name+' restored '+(always?'and pinned for future visits':'for this session'));
+}
+function removeObjectForever(index){
+ const item=objects[index];if(!item)return;
+ if(!confirm('Permanently delete "'+item.name+'" from History? This cannot be undone.'))return;
+ objects.splice(index,1);
+ if(editing===index)resetEditor();else if(editing>index)editing--;
+ save();draw();notifyWorkspace('Object permanently deleted');
+}
+function removeMeasureForever(index){
+ const item=measures[index];if(!item)return;
+ if(!confirm('Permanently delete "'+item.name+'" from History? This cannot be undone.'))return;
+ measures.splice(index,1);save();draw();notifyWorkspace('Measurement permanently deleted');
+}
+function historyEmpty(host,message){
+ const placeholder=document.createElement('div');placeholder.className='history-empty';
+ placeholder.textContent=message;host.appendChild(placeholder);
 }
 function lists(){
- const objectHost=$('objectList'),measureHost=$('measureList');
- objectHost.replaceChildren();measureHost.replaceChildren();
- objects.forEach((o,i)=>{
+ const activeObjects=$('objectList'), activeMeasures=$('measureList'),
+       archivedObjects=$('historyObjects'),archivedMeasures=$('historyMeasures');
+ for(const host of [activeObjects,activeMeasures,archivedObjects,archivedMeasures])host.replaceChildren();
+ objects.forEach((o,index)=>{
   const kind=o.type==='Point'?'Point':o.type==='Route'?'Route':'Polygon';
   const glyph=kind==='Point'?(o.quickMarker?'⌖':'●'):kind==='Route'?'⌁':'⬡';
-  const meta=[o.points.length+' point'+(o.points.length===1?'':'s'),o.buffer>0?'Buffer '+o.buffer+' NM':null,o.type==='Route'?total(o.points).toFixed(2)+' NM route':null,!o.visible?'Currently hidden':null].filter(Boolean).join(' · ');
-  const actions=[
-   {label:'⌕ Focus',click:()=>zoom(o.points),title:'Zoom the map to this saved object'},
-   {label:'✎ Edit',click:()=>beginEditObject(i)},
-   {label:o.visible?'◉ Hide':'◌ Show',click:()=>{o.visible=!o.visible;save();draw()}},
-   {label:'× Delete',danger:true,click:()=>{
-    if(!confirm('Delete saved object "'+o.name+'"?'))return;
-    objects.splice(i,1);if(editing===i)resetEditor();else if(editing>i)editing--;
-    save();draw();
-   }}
-  ];
-  objectHost.appendChild(createSavedCard({name:o.name||kind,type:kind,detail:meta,accent:/^#[\da-f]{6}$/i.test(o.color)?o.color:'#3ebfe7',symbol:glyph,hidden:o.visible===false,autoLoad:o.autoLoad!==false,onAutoLoad:checked=>{
-     o.autoLoad=checked;if(editing===i)$('autoload').checked=checked;
-     save();notifyWorkspace(checked?'Will show on the next visit':'Saved in Workspace; hidden next visit');
-   }},actions));
+  const meta=[o.points.length+' point'+(o.points.length===1?'':'s'),
+   o.buffer>0?'Buffer '+o.buffer+' NM':null,
+   kind==='Route'?total(o.points).toFixed(2)+' NM route':null,
+   o.visible===false&&!o.archived?'Currently hidden':null,
+   o.archived?'Archived':null].filter(Boolean).join(' · ');
+  const cardData={name:o.name||kind,type:kind,detail:meta,
+   accent:/^#[0-9a-f]{6}$/i.test(o.color)?o.color:'#3ebfe7',
+   symbol:glyph,hidden:o.visible===false,
+   autoLoad:o.autoLoad===true,onAutoLoad:checked=>setObjectAlways(index,checked)};
+  if(o.archived){
+   const actions=[
+    {label:'↩ Restore now',click:()=>restoreObject(index,false)},
+    {label:'✓ Show always',click:()=>restoreObject(index,true)},
+    {label:'× Delete forever',danger:true,click:()=>removeObjectForever(index)}
+   ];
+   archivedObjects.appendChild(createSavedCard(cardData,actions));
+  }else{
+   const actions=[
+    {label:'⌕ Focus',click:()=>zoom(o.points)},
+    {label:'✎ Edit',click:()=>beginEditObject(index)},
+    {label:o.visible===false?'◌ Show':'◉ Hide',click:()=>{o.visible=!o.visible;save();draw()}},
+    {label:'↧ Archive',click:()=>archiveObject(index)},
+    {label:'× Delete',danger:true,click:()=>{
+      if(!confirm('Delete saved object "'+o.name+'"?'))return;
+      objects.splice(index,1);
+      if(editing===index)resetEditor();else if(editing>index)editing--;
+      save();draw();
+    }}
+   ];
+   activeObjects.appendChild(createSavedCard(cardData,actions));
+  }
  });
- if(!objects.length){
-  objectHost.innerHTML='<div class="workspace-empty"><span class="empty-icon">⬡</span><span>No saved objects yet. Create a point, route or polygon below.</span></div>';
- }
- measures.forEach((m,i)=>{
-  const meta=[m.points.length+' waypoints',total(m.points).toFixed(2)+' NM total',m.visible===false?'Currently hidden':null].filter(Boolean).join(' · ');
-  const actions=[
-   {label:'⌕ Focus',click:()=>zoom(m.points)},
-   {label:'✎ Rename',click:()=>{const name=prompt('Measurement name:',m.name);if(name===null)return;const trimmed=name.trim();if(trimmed){m.name=trimmed.slice(0,100);save();draw()}}},
-   {label:m.visible===false?'◌ Show':'◉ Hide',click:()=>{m.visible=!m.visible;save();draw()}},
-   {label:'× Delete',danger:true,click:()=>{if(!confirm('Delete saved measurement "'+m.name+'"?'))return;measures.splice(i,1);save();draw()}}
-  ];
-  measureHost.appendChild(createSavedCard({name:m.name||'Measurement',type:'MEASUREMENT',detail:meta,accent:'#ffc46f',symbol:'⌁',hidden:m.visible===false,measure:true},actions));
+ if(!activeObjects.children.length)
+  activeObjects.innerHTML='<div class="workspace-empty"><span class="empty-icon">⬡</span><span>No active objects. Create one below or restore from History.</span></div>';
+ if(!archivedObjects.children.length)historyEmpty(archivedObjects,'No archived objects.');
+ measures.forEach((m,index)=>{
+  const meta=[m.points.length+' waypoints',total(m.points).toFixed(2)+' NM total',
+    m.archived?'Archived':m.visible===false?'Currently hidden':null].filter(Boolean).join(' · ');
+  const cardData={name:m.name||'Measurement',type:'MEASUREMENT',detail:meta,
+    accent:'#ffc46f',symbol:'⌁',hidden:m.visible===false,measure:true,
+    autoLoad:m.autoLoad===true,onAutoLoad:checked=>setMeasureAlways(index,checked)};
+  if(m.archived){
+   archivedMeasures.appendChild(createSavedCard(cardData,[
+    {label:'↩ Restore now',click:()=>restoreMeasure(index,false)},
+    {label:'✓ Show always',click:()=>restoreMeasure(index,true)},
+    {label:'× Delete forever',danger:true,click:()=>removeMeasureForever(index)}
+   ]));
+  }else{
+   activeMeasures.appendChild(createSavedCard(cardData,[
+    {label:'⌕ Focus',click:()=>zoom(m.points)},
+    {label:'✎ Rename',click:()=>{
+     const newName=prompt('Measurement name:',m.name);if(newName===null)return;
+     const name=newName.trim();if(name){m.name=name.slice(0,120);save();draw()}
+    }},
+    {label:m.visible===false?'◌ Show':'◉ Hide',click:()=>{m.visible=!m.visible;save();draw()}},
+    {label:'↧ Archive',click:()=>archiveMeasure(index)},
+    {label:'× Delete',danger:true,click:()=>{
+      if(!confirm('Delete saved measurement "'+m.name+'"?'))return;
+      measures.splice(index,1);save();draw();
+    }}
+   ]));
+  }
  });
- if(!measures.length){
-  measureHost.innerHTML='<div class="workspace-empty"><span class="empty-icon">⌁</span><span>No saved measurements yet. Use the Measure tool below, then Finish & Save.</span></div>';
- }
+ if(!activeMeasures.children.length)
+  activeMeasures.innerHTML='<div class="workspace-empty"><span class="empty-icon">⌁</span><span>No active measurements. Use Measure below or restore from History.</span></div>';
+ if(!archivedMeasures.children.length)historyEmpty(archivedMeasures,'No archived measurements.');
  updateWorkspaceTotals();
 }
 function zoom(p){if(p.length===1)map.setView(p[0],13);else map.fitBounds(L.latLngBounds(p),{padding:[40,40]})}function fitAll(){
