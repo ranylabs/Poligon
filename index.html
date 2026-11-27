@@ -860,7 +860,13 @@ function beginMeasurementEdit(index){
  $('measurementEditName').textContent=m.name||'Measurement';
  $('measurementEditPanel').hidden=false;
  resetMeasurementEditGeometry();
- zoom(editor.points);
+ const viewport=map.getSize();
+ if(editor.points.length>1){
+   map.fitBounds(L.latLngBounds(editor.points),{
+    paddingTopLeft:[45,45],
+    paddingBottomRight:[Math.min(330,Math.floor(viewport.x*0.38)),110]
+   });
+ }else zoom(editor.points);
  notifyWorkspace('Edit mode: drag the numbered handles, then Save Changes or Cancel');
 }
 function cancelMeasurementEdit(redraw=true){
@@ -1001,7 +1007,7 @@ function lists(){
   const meta=[m.points.length+' waypoints',total(m.points).toFixed(2)+' NM total',
     m.archived?'Archived':m.visible===false?'Currently hidden':null].filter(Boolean).join(' · ');
   const cardData={name:m.name||'Measurement',type:measurementEdit?.index===index?'EDITING':'MEASUREMENT',detail:meta,
-    accent:'#ffc46f',symbol:'⌁',hidden:m.visible===false,measure:true,
+    accent:'#ffc46f',symbol:'⌁',hidden:m.visible===false&&measurementEdit?.index!==index,measure:true,
     autoLoad:m.autoLoad===true,onAutoLoad:checked=>setMeasureAlways(index,checked)};
   if(m.archived){
    archivedMeasures.appendChild(createSavedCard(cardData,[
@@ -1278,6 +1284,13 @@ function onMapPointerMove(ev){
 }
 L.DomEvent.disableClickPropagation($('measurementEditPanel'));
 L.DomEvent.disableScrollPropagation($('measurementEditPanel'));
+document.addEventListener('keydown',event=>{
+ if(!measurementEdit||event.key!=='Escape'||event.defaultPrevented)return;
+ if(['INPUT','TEXTAREA','SELECT'].includes(event.target?.tagName))return;
+ if(measurementEdit.dirty&&!confirm('Discard unsaved measurement changes?'))return;
+ event.preventDefault();
+ cancelMeasurementEdit();
+});
 map.getContainer().addEventListener('pointermove',onMapPointerMove,{capture:true,passive:true});
 map.getContainer().addEventListener('contextmenu',event=>{
  if(event.target?.closest?.('.leaflet-control, .leaflet-popup, #measureContextMenu, #measurementEditPanel'))return;
