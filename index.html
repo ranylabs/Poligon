@@ -379,6 +379,7 @@ details[open]>.accordion-trigger .accordion-chevron{transform:rotate(225deg) tra
  </div>
  <div class="context-section-title">AT THIS POSITION</div>
  <button id="mapMenuStartMeasure" type="button" onclick="measureFromContext()">⌁ &nbsp;Measure from here</button>
+ <button type="button" onclick="addMarkerFromContext()">● &nbsp;Add marker here (save now)</button>
  <button type="button" onclick="addContextPointToEditor()">⊕ &nbsp;Add coordinate to editor</button>
  <button type="button" class="context-weather-action" onclick="weatherFromContext()">≋ &nbsp;Marine weather here</button>
  <button type="button" onclick="copyContextCoordinates()">⧉ &nbsp;Copy coordinates</button>
@@ -812,6 +813,26 @@ function measureFromContext(){
  revealAccordion('panel-measure',false);
  processMapSelection(target);
 }
+
+function addMarkerFromContext(){
+ const target=mapContextLatLng;
+ closeMeasureMenu();
+ if(!target)return;
+ let serial=objects.filter(o=>o.type==='Point').length+1;
+ let name='Marker '+serial;
+ while(objects.some(o=>o.name===name)){serial++;name='Marker '+serial}
+ const marker={
+  name,type:'Point',
+  points:[[target.lat,target.lng]],
+  color:$('color')?.value||'#2da6e9',
+  buffer:0,visible:true,autoLoad:true
+ };
+ objects.push(marker);
+ save();draw();
+ notifyWorkspace(name+' added to Your Workspace');
+ revealSavedWorkspace(false);
+}
+
 function addContextPointToEditor(){
  const target=mapContextLatLng;
  closeMeasureMenu();
@@ -905,11 +926,23 @@ document.addEventListener('keydown',event=>{
  }
 });
 /* Right-click is handled by the unified map action menu above. */
-function save(){try{localStorage.setItem('poligon-v1',JSON.stringify({objects,measures}))}catch(e){console.warn(e)}}function deleteAll(){if(confirm('Delete all objects?')){objects=[];save();draw()}}
+function save(){try{localStorage.setItem('poligon-v1',JSON.stringify({objects,measures}))}catch(e){console.warn(e)}}function deleteAll(){if(confirm('Delete all objects?')){objects=[];resetEditor();save();draw()}}
 function download(n,c,t){let u=URL.createObjectURL(new Blob([c],{type:t})),a=document.createElement('a');a.href=u;a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
 function exportKML(){let s='<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document>';for(let o of objects){let c=o.points.map(p=>p[1]+','+p[0]+',0').join(' '),g=o.type==='Point'?'<Point><coordinates>'+c+'</coordinates></Point>':o.type==='Route'?'<LineString><coordinates>'+c+'</coordinates></LineString>':'<Polygon><outerBoundaryIs><LinearRing><coordinates>'+c+' '+o.points[0][1]+','+o.points[0][0]+',0</coordinates></LinearRing></outerBoundaryIs></Polygon>';s+='<Placemark><name>'+clean(o.name)+'</name>'+g+'</Placemark>'}download('Poligon.kml',s+'</Document></kml>','application/vnd.google-earth.kml+xml')}
 function exportJSON(){download('Poligon-project.json',JSON.stringify({objects,measures},null,2),'application/json')}
-function importJSON(e){let f=e.target.files[0];if(!f)return;f.text().then(s=>{let d=JSON.parse(s);if(!Array.isArray(d.objects)||!Array.isArray(d.measures))throw Error('Invalid project');objects=d.objects;measures=d.measures;save();draw();fitAll()}).catch(e=>alert(e.message))}
+function importJSON(e){
+ const file=e.target.files?.[0];if(!file)return;
+ file.text().then(raw=>{
+  const data=JSON.parse(raw);
+  if(!Array.isArray(data.objects)||!Array.isArray(data.measures))throw Error('Invalid project');
+  const restored=data.objects.map(o=>({...o,autoLoad:o.autoLoad!==false}));
+  if(restored.some(o=>!Array.isArray(o.points)||!o.points.length||!['Point','Route','Polygon'].includes(o.type)))throw Error('Invalid object geometry');
+  objects=restored;measures=data.measures;
+  resetEditor();
+  save();draw();fitAll();
+  notifyWorkspace('Project loaded. Each object’s startup preference was preserved.');
+ }).catch(error=>alert(error.message)).finally(()=>{e.target.value=''});
+}
 function utc(){let d=new Date(),p=n=>String(n).padStart(2,'0');return d.getUTCFullYear()+'-'+p(d.getUTCMonth()+1)+'-'+p(d.getUTCDate())+'T'+p(d.getUTCHours())+':00'}$('hour').value=utc();
 async function weather(){if(!selected){$('weatherData').textContent='Select a position first';return}let [lat,lon]=selected,t=$('hour').value.slice(0,13)+':00';$('weatherData').textContent='Loading...';try{let w='https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&hourly=wind_speed_10m,wind_direction_10m,wind_gusts_10m&wind_speed_unit=kn&timezone=GMT&forecast_days=7',m='https://marine-api.open-meteo.com/v1/marine?latitude='+lat+'&longitude='+lon+'&hourly=wave_height,wave_direction,ocean_current_velocity,ocean_current_direction&timezone=GMT&forecast_days=7';let [a,b]=await Promise.all([fetch(w).then(r=>{if(!r.ok)throw Error('Weather API '+r.status);return r.json()}),fetch(m).then(r=>{if(!r.ok)throw Error('Marine API '+r.status);return r.json()})]);let i=a.hourly.time.indexOf(t),j=b.hourly.time.indexOf(t);if(i<0||j<0)throw Error('Hour outside forecast');let f=(x,u)=>x==null?'Unavailable':Number(x).toFixed(1)+' '+u,h=a.hourly,k=b.hourly;let c=k.ocean_current_velocity[j];$('weatherData').innerHTML='<b>'+t+' UTC</b><br>Wind '+f(h.wind_speed_10m[i],'kt')+' from '+f(h.wind_direction_10m[i],'°')+'<br>Gusts '+f(h.wind_gusts_10m[i],'kt')+'<br>Significant waves '+f(k.wave_height[j],'m')+'<br>Wave direction '+f(k.wave_direction[j],'°')+'<br>Current '+(c==null?'Unavailable':(c/1.852).toFixed(2)+' kt')+' toward '+f(k.ocean_current_direction[j],'°')+'<br><small>Open-Meteo model forecasts; current converted from km/h to knots. Nearshore limitations.</small>'}catch(e){$('weatherData').textContent='Unavailable: '+e.message}}
 
@@ -1092,7 +1125,18 @@ function openCompactWeatherAt(latlng){
  });
 }
 
-try{let d=JSON.parse(localStorage.getItem('poligon-v1')||'{}');objects=Array.isArray(d.objects)?d.objects:[];measures=Array.isArray(d.measures)?d.measures:[]}catch(e){}addPoint();draw();if(objects.length||measures.length)fitAll();
+try{
+ const data=JSON.parse(localStorage.getItem('poligon-v1')||'{}');
+ objects=Array.isArray(data.objects)?data.objects.map(o=>({
+   ...o,
+   autoLoad:o.autoLoad!==false,
+   visible:o.autoLoad!==false
+ })):[]; // Objects remain in Workspace even if they start hidden on the map.
+ measures=Array.isArray(data.measures)?data.measures:[];
+}catch(error){console.warn('Workspace restore failed',error)}
+addPoint();draw();
+const initialVisible=[...objects.filter(o=>o.visible!==false).flatMap(o=>o.points),...measures.filter(m=>m.visible!==false).flatMap(m=>m.points)];
+if(initialVisible.length)zoom(initialVisible);
 
 
 /* Reference overlays and per-feature color controls; independent of user objects. */
