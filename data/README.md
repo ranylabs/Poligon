@@ -178,6 +178,33 @@ The popup uses the existing Leaflet map, so it stays anchored correctly while th
 
 **Safety / licensing:** Open-Meteo model forecasts are *not observations*; the marine current forecast has limited coastal precision. The free API plan may not cover production/commercial/ongoing organizational use; provider terms, credits, and request limits must be checked before operational deployment. The popup is a planning aid only, not for navigation or sole-source SAR coordination.
 
+## November 27, 2026 — Live editing, saved startup visibility, and right-click markers
+
+### Object editing
+- Selecting **Edit** opens Object Settings and Coordinate Editor.
+- **Name, color, buffer (NM), Show on every visit** are saved immediately using the existing `poligon-v1` localStorage project key. The map and saved Workspace card update without clicking Plot.
+- **Coordinate edits** remain pending in the editor until the operator clicks **Update as Polygon** / **Update as Route** / Save Point. This is deliberate to prevent accidental geometry changes.
+- The live-edit status panel explicitly describes the difference. Deleting an object under edit resets the editor; deleting an earlier object adjusts the selected index.
+
+### Startup visibility
+- Each object stores `autoLoad` (boolean). The editor and saved Workspace card both expose **Show on every visit**.
+- **Default:** checked for newly saved polygons/routes/points and right-click quick markers. Old projects without the property also default to checked.
+- On each fresh page load, every saved object is **loaded into Workspace**, but only `autoLoad !== false` objects are displayed on the map. Other objects remain in Workspace, available using Show.
+- **Hide / Show** controls visibility in the current browser session; **Show on every visit** determines visibility on the next startup. A temporarily hidden object whose autoLoad remains checked reappears at the next visit.
+- Project JSON exports include this setting; older Line and V4-style JSON arrays are normalized on import.
+
+### Immediate marker
+- Right-click the map and choose **Add marker here (save now)**. A named, colored **map pin** is saved immediately, with `type: "Point"`, `quickMarker: true`, and `autoLoad: true`, without using Plot.
+- Marker is visible and listed in Your Workspace, with Edit / Focus / Hide / Delete and Show on every visit.
+- **Add coordinate to editor** remains a separate operation; it does not create a saved marker until the user plots it.
+
+### Interface
+- All eight sidebar accordion panels (including **Your Workspace**) are **closed by default** at new page load.
+- Editing opens only its relevant panels; saving an object/measurement opens Workspace.
+- The Leaflet basemap and seamark layer chooser now uses a consistent high-contrast dark background, light text, visible radio/checkbox selectors and improved spacing.
+
+**QA performed:** GitHub source syntax checks and pure-JS scenario tests for property mutation, legacy project parsing, startup visibility, marker creation and menu availability. **Not yet verified:** live click-through browser QA, CDN responsiveness, GitHub Pages deployment completion. 
+
 ## Layer UX and persistence
 
 - Reference layer colors are stored per feature in the **current browser** under `poligon-srr-colors-v2`. They can be changed independently from operator-created objects.
