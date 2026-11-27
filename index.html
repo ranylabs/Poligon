@@ -243,6 +243,11 @@ details[open]>.accordion-trigger .accordion-chevron{transform:rotate(225deg) tra
 .leaflet-control-layers-separator{border-top:1px solid #527585!important;margin:9px 0!important}
 .leaflet-control-layers-toggle{width:45px!important;height:45px!important}
 @media(max-width:750px){.leaflet-control-layers-expanded{min-width:184px}}
+
+/* Distinct map-pin marker for one-click saved positions */
+.poligon-marker-icon{border:0!important;background:transparent!important}
+.poligon-marker-pin{position:absolute;width:25px;height:25px;left:3px;top:2px;transform:rotate(-45deg);border-radius:50% 50% 50% 5px;border:2px solid #fff;background:var(--marker-color,#33c9e0);box-shadow:0 4px 11px #041626aa}
+.poligon-marker-pin:after{content:"";position:absolute;left:7px;top:7px;width:7px;height:7px;border-radius:50%;background:#f5fcff;box-shadow:0 1px 2px #0003}
 </style></head><body><div id="app"><aside aria-label="Poligon controls"><div class="app-brand">
   <div class="brand-logo" aria-hidden="true">P<span>·</span></div>
   <div class="brand-copy"><div class="brand-eyebrow">MARITIME OPERATIONS</div><div class="brand-title">POLIGON <span>Mapper</span></div><div class="brand-subtitle">Geospatial planning workspace</div></div>
@@ -496,7 +501,8 @@ function plot(requestedType){try{
  const prior=editing>=0?objects[editing]:null;
  const obj={name:$('name').value.trim()||type+' '+(objects.length+1),type,color:$('color').value,
   buffer:Math.max(0,+$('buffer').value||0),autoLoad:$('autoload').checked,
-  points:p,visible:prior?prior.visible!==false:true};
+  points:p,visible:prior?prior.visible!==false:true,
+  quickMarker:type==='Point'&&prior?.quickMarker===true};
  const updated=editing>=0;
  if(updated)objects[editing]=obj;else objects.push(obj);
  save();draw();zoom(p);resetEditor();
@@ -536,13 +542,20 @@ function draw(){
       }catch(e){console.warn(e)}
     }
     let l=o.type==='Point'
-      ?L.circleMarker(o.points[0],{radius:8,color:o.color,bubblingMouseEvents:false})
+      ?(o.quickMarker?L.marker(o.points[0],{
+         icon:L.divIcon({
+          className:'poligon-marker-icon',
+          html:'<span class="poligon-marker-pin" style="--marker-color:'+(/^#[0-9a-f]{6}$/i.test(o.color)?o.color:'#33c9e0')+'"></span>',
+          iconSize:[32,40],iconAnchor:[16,38],popupAnchor:[0,-32]
+         }),
+         bubblingMouseEvents:false
+       }):L.circleMarker(o.points[0],{radius:8,color:o.color,bubblingMouseEvents:false}))
       :o.type==='Route'
         ?L.polyline(o.points,{color:o.color,weight:4,bubblingMouseEvents:false})
         :L.polygon(o.points,{color:o.color,fillOpacity:.15,bubblingMouseEvents:false});
     bindSelectable(l,o.type==='Point'?o.points[0]:null);
     l.addTo(group);bindControlledPopup(l,clean(o.name)+' · '+o.type+' · '+o.buffer+' NM buffer');
-    o.points.forEach((p,i)=>{
+    if(!o.quickMarker)o.points.forEach((p,i)=>{
       const marker=L.circleMarker(p,{radius:5,color:o.color,fillColor:'#fff',fillOpacity:1,bubblingMouseEvents:false});
       bindSelectable(marker,p);
       marker.addTo(group).bindTooltip(String(i+1),{permanent:true,direction:'top'});
@@ -635,7 +648,7 @@ function lists(){
  objectHost.replaceChildren();measureHost.replaceChildren();
  objects.forEach((o,i)=>{
   const kind=o.type==='Point'?'Point':o.type==='Route'?'Route':'Polygon';
-  const glyph=kind==='Point'?'●':kind==='Route'?'⌁':'⬡';
+  const glyph=kind==='Point'?(o.quickMarker?'⌖':'●'):kind==='Route'?'⌁':'⬡';
   const meta=[o.points.length+' point'+(o.points.length===1?'':'s'),o.buffer>0?'Buffer '+o.buffer+' NM':null,o.type==='Route'?total(o.points).toFixed(2)+' NM route':null,!o.visible?'Currently hidden':null].filter(Boolean).join(' · ');
   const actions=[
    {label:'⌕ Focus',click:()=>zoom(o.points),title:'Zoom the map to this saved object'},
@@ -825,7 +838,7 @@ function addMarkerFromContext(){
   name,type:'Point',
   points:[[target.lat,target.lng]],
   color:$('color')?.value||'#2da6e9',
-  buffer:0,visible:true,autoLoad:true
+  buffer:0,visible:true,autoLoad:true,quickMarker:true
  };
  objects.push(marker);
  save();draw();
