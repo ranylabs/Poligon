@@ -248,6 +248,27 @@ details[open]>.accordion-trigger .accordion-chevron{transform:rotate(225deg) tra
 .poligon-marker-icon{border:0!important;background:transparent!important}
 .poligon-marker-pin{position:absolute;width:25px;height:25px;left:3px;top:2px;transform:rotate(-45deg);border-radius:50% 50% 50% 5px;border:2px solid #fff;background:var(--marker-color,#33c9e0);box-shadow:0 4px 11px #041626aa}
 .poligon-marker-pin:after{content:"";position:absolute;left:7px;top:7px;width:7px;height:7px;border-radius:50%;background:#f5fcff;box-shadow:0 1px 2px #0003}
+
+/* Dedicated history accordion and archived-item cards */
+.history-panel{display:block;padding:0;border:1px solid #53616c;border-radius:10px;margin:12px 0 19px;overflow:clip;background:#112532;box-shadow:0 4px 13px #06172438}
+.history-trigger{min-height:56px;padding:13px 14px;color:#d9e5ed;gap:9px}
+.history-trigger:hover{background:#244051}
+.history-panel[open]>.history-trigger{background:#1c3443;border-bottom:1px solid #405969;border-radius:9px 9px 0 0}
+.history-title{display:flex;align-items:center;gap:9px;font-size:12.5px;letter-spacing:.09em;font-weight:850;flex:1}
+.history-symbol{display:grid;place-items:center;width:24px;height:24px;font-size:21px;color:#c5bccf}
+.history-counter{padding:4px 8px;border-radius:15px;background:#2d404e;color:#cbdce6;font-size:11px;font-weight:700;white-space:nowrap}
+.history-content{padding:13px}
+.history-caption{margin:0 0 13px;color:#a9bfcc;font-size:12px;line-height:1.65}
+.history-section{margin:12px 0 16px}
+.history-items{display:flex;flex-direction:column;gap:8px;max-height:390px;overflow:auto;scrollbar-width:thin;scrollbar-color:#526c7b transparent}
+.history-items .saved-card{--entity-accent:#889eaf;background:#10222f;border-color:#49606c}
+.history-items .saved-card .saved-card-meta{color:#a8b9c5}
+.history-items .saved-card-controls{background:#182c39}
+.history-footnote{border-top:1px solid #3b5260;padding-top:10px;color:#a5bccb;font-size:11px;line-height:1.6}
+.history-items .history-empty{border:1px dashed #4d6471;border-radius:8px;padding:12px;color:#91a9b8;font-size:12px}
+.saved-card-controls .card-restore{background:#28566b;color:#e2fbff;border-color:#3b879c}
+.saved-card-controls .card-always{background:#174c43;color:#a1f2d4;border-color:#387766}
+.autoload-setting small{font-size:11.5px}
 </style></head><body><div id="app"><aside aria-label="Poligon controls"><div class="app-brand">
   <div class="brand-logo" aria-hidden="true">P<span>·</span></div>
   <div class="brand-copy"><div class="brand-eyebrow">MARITIME OPERATIONS</div><div class="brand-title">POLIGON <span>Mapper</span></div><div class="brand-subtitle">Geospatial planning workspace</div></div>
@@ -272,6 +293,25 @@ details[open]>.accordion-trigger .accordion-chevron{transform:rotate(225deg) tra
   </div>
   </div>
 </details>
+<details id="history" class="history-panel accordion-workspace">
+ <summary class="accordion-trigger history-trigger" aria-label="Expand saved object and measurement history">
+  <span class="history-title"><span class="history-symbol" aria-hidden="true">◷</span> HISTORY / ARCHIVE</span>
+  <span id="historyCounter" class="history-counter">0 archived</span>
+  <span class="accordion-chevron" aria-hidden="true"></span>
+ </summary>
+ <div class="accordion-content history-content">
+  <p class="history-caption">Past objects and measurements stay here without cluttering the current workspace. Restore temporarily, show on every visit, or delete permanently.</p>
+  <div class="history-section">
+   <div class="workspace-group-heading"><span>ARCHIVED OBJECTS</span><span id="historyObjectsCount" class="workspace-group-count">0</span></div>
+   <div id="historyObjects" class="history-items" aria-label="Archived map objects"></div>
+  </div>
+  <div class="history-section">
+   <div class="workspace-group-heading"><span>ARCHIVED MEASUREMENTS</span><span id="historyMeasuresCount" class="workspace-group-count">0</span></div>
+   <div id="historyMeasures" class="history-items" aria-label="Archived measurements"></div>
+  </div>
+  <p class="history-footnote">History is saved locally in this browser, not in the cloud. Export Project JSON periodically to make a backup.</p>
+ </div>
+</details>
 <div class="tool-divider"><span>MAP TOOLS</span><small>CREATE · MEASURE · ANALYSE</small></div><div class="context-discovery-hint"><span aria-hidden="true">⌖</span><span><b>Quick actions:</b> right-click anywhere on the map for Measure, Add Point, Weather or Copy Coordinates.</span></div><details class="accordion-tool tool-panel" id="panel-object">
     <summary class="accordion-trigger" aria-label="Expand or collapse Object settings">
       <span class="accordion-title"><span class="tool-index">01</span><span>Object settings</span></span>
@@ -280,7 +320,7 @@ details[open]>.accordion-trigger .accordion-chevron{transform:rotate(225deg) tra
     <div class="accordion-content">
  <label for="name">Object name</label><input id="name" placeholder="Object name" style="width:100%" maxlength="120">
  <div class="row" style="margin-top:9px"><label>Color <input id="color" type="color" value="#2da6e9"></label><label>Buffer NM <input id="buffer" type="number" min="0" step=".1" value="0" style="width:78px"></label></div>
- <label class="autoload-setting"><input id="autoload" type="checkbox" checked><span><b>Show automatically on each visit</b><small>The object stays in Your Workspace regardless. If unchecked, it starts hidden on the map next time.</small></span></label>
+ <label class="autoload-setting"><input id="autoload" type="checkbox"><span><b>Show automatically on each visit</b><small>Unchecked by default. Keep it in the current session; next visit it moves into History. Check to keep it active and visible on future visits.</small></span></label>
  <div id="liveEditStatus" class="live-edit-status" role="status" hidden><b>LIVE EDITING</b><span>Name, color, buffer and startup setting save immediately. Only changes to the coordinate table require Update Polygon / Route.</span></div>
  <p class="tool-hint">Choose Polygon or Route after entering the coordinates in the editor below.</p></div>
   </details><details class="accordion-tool tool-panel" id="panel-paste">
